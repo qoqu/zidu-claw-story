@@ -11,6 +11,29 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 - 所有子流程知识库：`references/<sub>.md`（路由后读对应主文档 + 其下 craft KB）
 - 版本：`VERSION` 文件
 
+## 〇、主动引导（零意图兜底）
+
+**本 skill 必须主动引导，不要等用户先说出具体关键词。**
+
+当本 skill 被加载，而用户**尚未给出明确子意图**（典型信号：只说「用一下 zidu-claw-story」「帮我写小说」「看看你能干嘛」「打开写作工具」等宽泛表述），你**必须**：
+
+1. **先输出功能总览**，而不是反问「你想做什么」就停住；
+2. 优先调用 `node scripts/menu.js` 生成最新功能清单并展示给用户；若无法执行脚本，则直接复用下方「功能总览」；
+3. 用一句话收尾询问用户想先做哪件事（从清单里挑），或让他直接描述需求。
+
+> 这一条优先级高于「一、意图路由表」的被动匹配：路由表解决「用户说了 A 就做 A」，本段解决「用户没说清就主动给地图」。
+
+### 功能总览（6 大域）
+
+| 域 | 能做什么 | 入口 |
+|---|---|---|
+| ✍ 写 | 长篇 / 短篇开书、大纲、连载、日更、续写 | `references/long-write.md`、`references/short-write.md` |
+| 🔍 拆 | 长篇 / 短篇拆文、对标爆款、黄金三章 | `references/long-analyze.md`、`references/short-analyze.md` |
+| 📊 选 | 起点 / 番茄 / 晋江 / 盐言扫榜选题 | `references/long-scan.md`、`references/short-scan.md` |
+| ✨ 净 | 去 AI 味、生成封面图 | `references/deslop.md`、`references/cover.md` |
+| 🗂 查 | 审查体检、导入已有书、初始化环境 | `references/review.md`、`references/import.md`、`references/setup.md` |
+| 🛡 控 | 量化质检、伏笔/时间线/角色/物品追踪、浏览器 CDP 抓取 | `scripts/quality-gate.js`、`scripts/tracking-updater.js`、`scripts/pipeline-gate.js`、`references/browser-cdp.md` |
+
 ## 一、意图路由表
 
 | 用户意图 | 关键词示例 | 执行 |
