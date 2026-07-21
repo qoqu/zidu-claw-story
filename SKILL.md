@@ -66,7 +66,7 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 | 生成本书设定卡 | 合并设定、从正文抽人物/组织候选、出 LLM 补全提示词 | 见下方「四·扩」→ `scripts/setting-cards.js` |
 | 多平台发布物料 | 章推、书评、求追读文案、按平台语气生成 | 见下方「四·扩」→ `scripts/promo-pack.js` |
 | 发布排期/Runbook | 发布排期、逐章发布命令、写→发清单 | 见下方「四·扩」→ `scripts/promo-pack.js calendar|runbook` |
-| 选题→成书闭环 | 选题、开书、从热点到成书、写作流水线 | 见下方「四·流」→ `scripts/topic-to-book.js` |
+| 选题→成书闭环 | 选题、开书、从热点到成书、写作流水线、选题情报蓝海指数、追读回落门禁 | 见下方「四·流」→ `scripts/topic-to-book.js` / `scripts/rank-dispatcher.js` |
 | 自测/回归 | 自测、回归、跑一遍脚本、别改坏 | 见下方「四·流」→ `scripts/selftest.js` |
 | 查故事资料 | 查角色、查伏笔、查进度、写到哪了 | 主线程用 Read/Grep 检索项目 `设定/` `追踪/` `大纲/`（见「四、WB 适配」降级说明） |
 
@@ -163,6 +163,13 @@ node scripts/style-drift.js <项目目录> [--json] [--html out.html] [--z 1.5]
 - 用途：辅助识别代笔 / AI 味突变 / 写作状态断档。
 - 有效章节 < 3 章时退出（基线不可靠）。
 
+### 实时风格护栏 `drift-guard.js`
+```bash
+node scripts/drift-guard.js <章节文件> [--project <项目目录>] [--z 1.5]
+```
+- 写完一章跑一次，复用 `style-drift.js --json` 但**只聚焦传入章节**的 z-score：从结果里定位该章号对应的指标，标记漂移（advisory，不阻断）。
+- 内容过短（<30 字）或未被纳入基线的章节会友好跳过；前 2 章基线不足也跳过。可作编辑器"保存章节"钩子。
+
 ### 多项目仪表盘 `dashboard.js`
 ```bash
 node scripts/dashboard.js <根目录> [--json] [--html out.html]
@@ -212,7 +219,8 @@ node scripts/promo-pack.js book    <项目目录> --platform 小红书 [--title 
 
 ### 选题→成书闭环 `topic-to-book.js`
 ```bash
-node scripts/topic-to-book.js scan    [--kw 扮猪吃虎] [--platform 番茄] [--gender 男频]   # 离线题材风向（实时热榜需 rank-scraper，默认离线适配无头环境）
+node scripts/topic-to-book.js scan    [--kw 扮猪吃虎] [--platform 番茄] [--gender 男频]   # 离线题材风向
+node scripts/topic-to-book.js scan --from-rank --rank-dir data/rank                       # 读排行榜缓存算蓝海指数选题榜（需先 rank-dispatcher scan/refresh）
 node scripts/topic-to-book.js match   --topic "重生爽文"                                  # 选题匹配题材库
 node scripts/topic-to-book.js scaffold --genre 修仙 --title "我的书" [--gender 男频] [--platform 起点]   # 开书骨架（设定/正文/追踪/大纲/记忆 + 追踪文件 + 大纲模板）
 node scripts/topic-to-book.js plan    --dir <项目目录> [--words 3000]                     # 今日配速（章节数 + outline-pacer 结构配比）
@@ -227,6 +235,14 @@ node scripts/selftest.js [--quiet] [--json]
 ```
 - 阶段1 语法检查（`node --check` 每个脚本）→ 阶段2 启动冒烟（非网络/浏览器脚本跑 `--help`，断言不崩）→ 阶段3 功能冒烟（临时项目跑 tracking-updater init → dashboard → learn-bank → genre-library → outline-pacer）。
 - **改完任何脚本后先跑一遍**，确认没带崩其他脚本，再提交。
+
+### 排行榜统一底座 / 选题情报 `rank-dispatcher.js`
+```bash
+node scripts/rank-dispatcher.js scan --dir data/rank        # 离线聚合各平台榜单 MD → rank-index.json
+node scripts/rank-dispatcher.js refresh --dir data/rank    # 逐个 spawn 7 爬虫刷新（失败隔离），再聚合
+```
+- 把 7 个平台 `*-rank-scraper.js` 的采集结果统一收拢为一份 `rank-index.json`，供 `topic-to-book.js scan --from-rank` 做蓝海指数分析。
+- 不重写爬虫主体（保留各平台 CDP 适配差异）；`scan` 只聚合已有缓存、永远可跑，`refresh` 才联网且失败隔离。
 
 ## 四、WorkBuddy 适配说明（与原生多宿主差异，已降级处理）
 
@@ -274,8 +290,11 @@ node scripts/selftest.js [--quiet] [--json]
 
 **追踪 / 流水线 / 记忆 / 观 / 扩** → 见各自 `references/<sub>.md` 与 `docs/scripts.md`。
 
-**选题→成书闭环 / 自测**
+**选题→成书闭环 / 自测 / 数据驱动**
 - 从选题到开书骨架到追读复盘一条龙 → `scripts/topic-to-book.js`（scan / match / scaffold / plan / review）
+- 写之前想用热榜数据定选题 → `scripts/rank-dispatcher.js` 聚合 + `topic-to-book.js scan --from-rank`（蓝海指数）
+- 写完一章想防默默掉追读 → `scripts/quality-gate.js` 的 pacing 维度（advisory）
+- 写完一章想防文风跑偏 → `scripts/drift-guard.js`（聚焦该章 z-score 漂移，advisory）
 - 改完想确认没带崩其他脚本 → `scripts/selftest.js`
 
 > 已废弃：`full-consistency-audit.js`（原声称"整本书级审计"但未实现跨章矛盾，且被 doctor + consistency-check + continuity-ledger 覆盖，已于 v1.4.1 删除）。

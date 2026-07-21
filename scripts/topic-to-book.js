@@ -25,6 +25,8 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
+const { SEED } = require('./genre-library');
+const { scanRank } = require('./rank-dispatcher');
 
 const RESET = '\x1b[0m', BOLD = '\x1b[1m', DIM = '\x1b[2m';
 const GREEN = '\x1b[32m', RED = '\x1b[31m', YELLOW = '\x1b[33m', CYAN = '\x1b[36m';
@@ -50,13 +52,16 @@ function getOpt(argv, k, def = '') {
   return i >= 0 && argv[i + 1] ? argv[i + 1] : def;
 }
 
-// ===== scan：离线题材风向 =====
+// ===== scan：选题情报（离线 / 蓝海指数） =====
 function cmdScan(argv) {
+  if (argv.includes('--from-rank')) {
+    return cmdScanBlueOcean(getOpt(argv, '--rank-dir', 'data/rank'));
+  }
   const kw = getOpt(argv, '--kw');
   const platform = getOpt(argv, '--platform');
   const gender = getOpt(argv, '--gender');
   log('题材风向（离线，基于内置 37 题材种子）');
-  info('提示：实时热榜需各平台 rank-scraper（依赖浏览器/CDP），本命令默认离线，避免无头环境卡死。');
+  info('提示：实时热榜需各平台 rank-scraper（依赖浏览器/CDP）。加 --from-rank 读取爬虫缓存做蓝海指数分析。');
   let res;
   if (kw) res = run('genre-library.js', ['search', '--kw', kw]);
   else if (platform || gender) res = run('genre-library.js', ['filter', ...(platform ? ['--platform', platform] : []), ...(gender ? ['--gender', gender] : [])]);
@@ -64,6 +69,76 @@ function cmdScan(argv) {
   if (res.code !== 0) { err('genre-library 调用失败：' + res.err.trim().split('\n')[0]); return 2; }
   console.log(res.out);
   info('下一步：topic-to-book match --topic "<你中意的卖点>"，或 scaffold 直接开书。');
+  return 0;
+}
+
+// 蓝海指数：读 rank-dispatcher 聚合的榜单 → 用题材标签匹配热榜书名 → 算需求/竞争
+function cmdScanBlueOcean(rankDir) {
+  const index = scanRank(rankDir);
+  if (!index || !index.platforms.length) {
+    warn('无榜单缓存：请先运行 `node rank-dispatcher.js refresh --dir ' + rankDir + '`');
+    info('或手动把各平台榜单 MD 放到 ' + rankDir + '/<平台>/ 下，再 scan --from-rank');
+    return 1;
+  }
+  const genreHeat = {};   // 题材 -> 累计热度
+  const genreHit = {};    // 题材 -> 命中条目数
+  const matchedMap = new Map();  // 证据（按 平台|书名 去重）
+  for (const p of index.platforms) {
+    for (const f of p.files) {
+      let fp = path.join(rankDir, p.platform, f.name);
+      if (!fs.existsSync(fp)) fp = path.join(rankDir, f.name);
+      if (!fs.existsSync(fp)) continue;
+      const content = fs.readFileSync(fp, 'utf-8');
+      for (const ln of content.split('\n')) {
+        let title = null, heat = 0;
+        const m = ln.match(/^\s*\d+[\.、)]\s*《?([^》\n]{1,40})》?\s*[-—–]\s*([^\d\n]{1,30}?)\s*(\d[\d,]*)\s*$/);
+        if (m) { title = m[1].trim(); heat = parseInt(m[3].replace(/,/g, ''), 10) || 0; }
+        else {
+          const bm = ln.match(/《([^》]+)》/);
+          if (bm) { title = bm[1].trim(); const hm = ln.match(/(\d[\d,]*)\s*$/); heat = hm ? (parseInt(hm[1].replace(/,/g, ''), 10) || 0) : 0; }
+        }
+        if (!title) continue;
+        for (const [g, meta] of Object.entries(SEED)) {
+          const hit = title.includes(g) || (meta.tags && meta.tags.some((t) => title.includes(t)));
+          if (!hit) continue;
+          genreHeat[g] = (genreHeat[g] || 0) + heat;
+          genreHit[g] = (genreHit[g] || 0) + 1;
+          const mkey = p.platform + '|' + title;
+          if (!matchedMap.has(mkey)) matchedMap.set(mkey, { title, genres: new Set(), platform: p.platform, heat });
+          matchedMap.get(mkey).genres.add(g);
+        }
+      }
+    }
+  }
+  const rows = Object.keys(SEED).map((g) => {
+    const meta = SEED[g];
+    const demand = genreHeat[g] || 0;
+    const hit = genreHit[g] || 0;
+    const platN = (meta.platforms || []).length;
+    const tagN = (meta.tags || []).length;
+    const competition = platN + tagN * 0.5;          // 平台越多/标签越多 = 越红海
+    const blue = demand > 0 ? Math.round(demand / competition) : 0;
+    return { genre: g, demand, hit, platN, tagN, competition: +competition.toFixed(1), blue };
+  }).filter((r) => r.demand > 0).sort((a, b) => b.blue - a.blue);
+
+  log('选题情报 · 蓝海指数榜（来源：' + index.platformCount + ' 平台 / ' + index.totalEntries + ' 条榜单）');
+  info('蓝海指数 = 热榜命中热度 ÷ 竞争度(平台数 + 标签×0.5)；越高越值得写');
+  console.log('');
+  console.log(BOLD + '排名  题材        指数  热度  命中  平台×标签' + RESET);
+  if (!rows.length) {
+    warn('未从热榜解析出题材命中，可能榜单格式不匹配或样本为空。');
+  } else {
+    rows.slice(0, 15).forEach((r, i) => {
+      const line = String(i + 1).padEnd(5) + (r.genre + '          ').slice(0, 10) +
+        String(r.blue).padEnd(6) + String(r.demand).padEnd(6) + String(r.hit).padEnd(5) +
+        r.platN + '×' + r.tagN;
+      console.log(line);
+    });
+  }
+  console.log('');
+  info('证据（前 8 条命中）：');
+  [...matchedMap.values()].slice(0, 8).forEach((b) => info('  《' + b.title + '》→ ' + [...b.genres].join('/') + '（' + b.platform + '，热度 ' + b.heat + '）'));
+  info('下一步：topic-to-book scaffold --genre <榜首题材> --title "你的书名"');
   return 0;
 }
 

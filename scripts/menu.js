@@ -34,6 +34,7 @@ const DOMAINS = [
     items: [
       { name: '长篇扫榜', entry: 'references/long-scan.md', note: '起点 / 番茄 / 晋江 排行爬虫' },
       { name: '短篇扫榜', entry: 'references/short-scan.md', note: '知乎盐言排行' },
+      { name: '排行榜统一底座', entry: 'scripts/rank-dispatcher.js', note: '聚合 7 平台榜单为 rank-index.json，选题情报数据源' },
     ],
   },
   {
@@ -74,6 +75,7 @@ const DOMAINS = [
       { name: '节奏密度曲线', entry: 'scripts/pacing-density.js', note: '解析追读力.md，ASCII 曲线 + 水章标记 + HTML 线图' },
       { name: '文风漂移检测', entry: 'scripts/style-drift.js', note: '逐章句长/对话比/标点/丰富度 z-score，标记漂移章' },
       { name: '多项目仪表盘', entry: 'scripts/dashboard.js', note: '聚合所有书的进度/字数/追读密度/健康度/记忆条数' },
+      { name: '实时风格护栏', entry: 'scripts/drift-guard.js', note: '写完一章跑，聚焦该章文风 z-score 漂移，advisory 不阻断' },
     ],
   },
   {
@@ -90,8 +92,8 @@ const DOMAINS = [
     key: 'flow',
     title: '流  —— 选题→成书闭环 / 自测（T4 新增）',
     items: [
-      { name: '选题→成书闭环', entry: 'scripts/topic-to-book.js', note: 'scan/match/scaffold/plan/review 串起扫榜→开书→追读复盘' },
-      { name: '自测套件', entry: 'scripts/selftest.js', note: '42 脚本语法/启动/功能三层冒烟，改一处不崩一片' },
+      { name: '选题→成书闭环', entry: 'scripts/topic-to-book.js', note: 'scan(含选题情报蓝海指数)/match/scaffold/plan/review 串起扫榜→开书→追读复盘' },
+      { name: '自测套件', entry: 'scripts/selftest.js', note: '44 脚本语法/启动/功能三层冒烟，改一处不崩一片' },
     ],
   },
 ];

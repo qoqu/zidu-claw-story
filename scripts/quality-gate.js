@@ -21,6 +21,7 @@ Checks:
   8. satisfaction      — Satisfaction point density → BLOCK
   9. detect-story-gaps — Setting/outline/tracking gaps → BLOCK (full mode only)
   10. writing-score   — 百分制评分（--genre 选择题材模板）
+  11. pacing           — 最新章追读密度 < 阈值 → ADVISORY（不阻断，需先有追读数据）
 
 Options:
   --json              Output structured JSON
@@ -40,6 +41,7 @@ Options:
   --skip-emotion      Skip emotion-analyzer
   --skip-satisfaction Skip satisfaction-meter
   --fast              Only run blocking checks (skip warnings)
+  --skip-pacing       Skip 追读回落检查（pacing）
 
 Exit codes:
   0 = all passed (including score >= threshold)
@@ -107,6 +109,7 @@ function main() {
   const skipVoice = args.includes('--skip-voice');
   const skipEmotion = args.includes('--skip-emotion');
   const skipSatisfaction = args.includes('--skip-satisfaction');
+  const skipPacing = args.includes('--skip-pacing');
   const fastMode = args.includes('--fast');
   const noScore = args.includes('--no-score');
   const genre = args.includes('--genre') ? args[args.indexOf('--genre') + 1] : 'default';
@@ -116,7 +119,7 @@ function main() {
   const filteredArgs = args.filter(a =>
     a !== '--json' && a !== '--full' && a !== '--skip-lint' && a !== '--skip-consistency' && a !== '--skip-foreshadow' &&
     a !== '--skip-cross-chapter' && a !== '--skip-voice' && a !== '--skip-emotion' && a !== '--skip-satisfaction' &&
-    a !== '--fast' && a !== '--no-score' && a !== '--genre' && a !== '--score' && a !== '--threshold'
+    a !== '--fast' && a !== '--no-score' && a !== '--genre' && a !== '--score' && a !== '--threshold' && a !== '--skip-pacing'
   );
 
   if (filteredArgs.length === 0 || filteredArgs[0] === '--help') {
@@ -144,6 +147,7 @@ function main() {
     emotion: null,
     satisfaction: null,
     detect_story_gaps: null,
+    pacing: null,
   };
 
   const blockers = [];
@@ -292,6 +296,31 @@ function main() {
     }
   }
 
+  // 追读回落门禁（ADVISORY，不阻断）：写完一章若有追读数据，评估最新章密度
+  if (!skipPacing) {
+    const pdScript = path.join(scriptsDir, 'pacing-density.js');
+    const r = runScript(pdScript, ['--json', projectDir]);
+    let pdData = null;
+    try { pdData = JSON.parse(r.output); } catch {}
+    if (pdData && Array.isArray(pdData.chapters) && pdData.chapters.length) {
+      const last = pdData.chapters[pdData.chapters.length - 1];
+      const th = pdData.waterThreshold || 45;
+      results.pacing = {
+        status: 'pass',
+        advisory: last.norm < th,
+        latestChapter: last.chapter,
+        latestDensity: last.norm,
+        threshold: th,
+        warning: last.norm < th,
+        waterChapters: pdData.waterChapters || [],
+      };
+    } else if (pdData && Array.isArray(pdData.chapters)) {
+      results.pacing = { status: 'no_data' };
+    } else {
+      results.pacing = { status: 'error', raw: r.output };
+    }
+  }
+
   // --- Scoring layer ---
   let scoreResult = null;
   let scoreFailed = false;
@@ -417,6 +446,19 @@ function main() {
     if (s.summary) {
       const icon = (s.summary.totalBlocking || 0) > 0 ? '❌' : ((s.summary.totalWarnings || 0) > 0 ? '⚠️' : '✅');
       console.log(`${icon} 项目缺口：${s.summary.totalWarnings || 0} 警告, ${s.summary.totalBlocking || 0} 阻断`);
+    }
+  }
+
+  if (results.pacing) {
+    const s = results.pacing;
+    if (s.status === 'no_data') {
+      console.log('⚪ 追读回落：暂无追读数据（先运行 tracking-updater reading-power）');
+    } else if (s.status === 'error') {
+      console.log('⚠️ 追读回落：追读数据读取异常');
+    } else if (s.warning) {
+      console.log(`⚠️ 追读回落：第${s.latestChapter}章密度 ${s.latestDensity} < 阈值 ${s.threshold}，疑似水章，建议补钩子/爽点`);
+    } else {
+      console.log(`✅ 追读回落：第${s.latestChapter}章密度 ${s.latestDensity}（≥ 阈值 ${s.threshold}）`);
     }
   }
 

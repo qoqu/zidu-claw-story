@@ -1,6 +1,6 @@
 # 脚本命令参考（scripts/）
 
-本目录含 **42 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
+本目录含 **44 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
 
 命令中的 `<项目目录>` 指你的小说工程根（含 `正文/` `设定/` `追踪/` 等）。
 
@@ -12,7 +12,7 @@
 
 | 脚本 | 作用 |
 |---|---|
-| `quality-gate.js` | 统一质量门禁入口（双道去味：style-lint + check-ai-patterns；其余检查全绿才放行） |
+| `quality-gate.js` | 统一质量门禁入口（双道去味：style-lint + check-ai-patterns；含追读回落 pacing 维度 advisory；其余检查全绿才放行） |
 | `style-lint.js` | 文风检查（措辞/病句） |
 | `consitency-check.js` | 一致性检查（人名/设定前后矛盾） |
 | `foreshadow-check.js` | 伏笔检查（overdue 未回收伏笔） |
@@ -100,10 +100,14 @@ node scripts/pipeline-gate.js qa <章节.md> <项目目录> [--chapter N] [--gen
 | `qimao-rank-scraper.js` | 七猫排行榜 |
 | `dz-browse-scraper.js` | 豆瓣浏览 |
 | `heiyan-booklist-scraper.js` | 黑岩书单 |
+| `rank-dispatcher.js` | 排行榜统一底座：scan 聚合各平台榜单 MD 为 rank-index.json；refresh 统一调度 7 个爬虫（失败隔离） |
 
 ```bash
 node scripts/qidian-rank-scraper.js <项目目录> [--limit 50]
 # 其余爬虫参数类似，详见各脚本 --help
+# 统一聚合（离线，不联网）
+node scripts/rank-dispatcher.js scan --dir data/rank
+node scripts/rank-dispatcher.js refresh --dir data/rank   # 逐个 spawn 7 爬虫刷新（失败隔离）
 ```
 
 > 合规提示：爬虫属个人研究用途，合规由使用者自行承担。
@@ -172,6 +176,7 @@ node scripts/learn-bank.js <项目目录> stats
 | `pacing-density.js` | 节奏密度曲线：解析 `追踪/追读力.md` 每章块，合成追读密度分(0-100)，ASCII 曲线 + 水章标记 + `--html` 折线图 |
 | `style-drift.js` | 文风漂移检测：逐章算句长/对话比/标点密度/用词丰富度，与全书均值比 z-score，标记 `\|z\|>1.5` 的漂移章 |
 | `dashboard.js` | 多项目仪表盘：扫描根目录下属项目，聚合章节数/总字数/最新章/最新追读密度/doctor 健康度/记忆条数；`--html` 卡片含每本书追读密度火花线(SVG)与健康度进度条 |
+| `drift-guard.js` | 实时风格护栏：写完一章跑，复用 style-drift 只聚焦传入章的 z-score 漂移，advisory 不阻断，可作编辑器保存钩子 |
 
 ```bash
 # 节奏密度曲线（写章后看节奏是否"凹"下去）
@@ -184,6 +189,9 @@ node scripts/style-drift.js <项目目录> [--json] [--html out.html] [--z 1.5]
 # 多项目仪表盘（多开书时总览）
 node scripts/dashboard.js <根目录> [--json] [--html out.html]
 #   → 根目录：含多个子项目（各含 正文/ 或 追踪/）的父目录
+
+# 实时风格护栏（写完一章触发，聚焦该章文风漂移）
+node scripts/drift-guard.js <章节文件> [--project <项目目录>] [--z 1.5]
 ```
 
 ---
@@ -235,6 +243,7 @@ node scripts/promo-pack.js runbook  <项目目录> --platforms 微博,小红书,
 ```bash
 # 选题→成书（从热点到开书骨架）
 node scripts/topic-to-book.js scan --kw 扮猪吃虎
+node scripts/topic-to-book.js scan --from-rank --rank-dir data/rank   # 读排行榜缓存算蓝海指数选题榜
 node scripts/topic-to-book.js match --topic "重生爽文"
 node scripts/topic-to-book.js scaffold --genre 修仙 --title "我的书" [--gender 男频] [--platform 起点]
 node scripts/topic-to-book.js plan    --dir <项目目录> [--words 3000]
