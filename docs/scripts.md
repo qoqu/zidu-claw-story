@@ -4,6 +4,8 @@
 
 命令中的 `<项目目录>` 指你的小说工程根（含 `正文/` `设定/` `追踪/` 等）。
 
+> **统一写章流程（canonical，每章 6 步）**：写正文 → `tracking-updater`(+`reading-power` 喂追读) → `punct-precheck`+`check-degeneration` → **`quality-gate`(含 pacing 维度，唯一硬门禁)** → `drift-guard`(advisory) → `learn-bank`+`pipeline-gate backup`。`quality-gate` 内部已含 `check-ai-patterns`，**不要在其外重复跑**。详见 `SKILL.md`「写章标准流程」与 `references/long-write.md` Phase 5 / `references/workflow-daily.md` Step 3。
+
 ---
 
 ## A. 量化质检族
