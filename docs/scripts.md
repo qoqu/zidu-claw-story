@@ -1,6 +1,6 @@
 # 脚本命令参考（scripts/）
 
-本目录含 **32 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
+本目录含 **35 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
 
 命令中的 `<项目目录>` 指你的小说工程根（含 `正文/` `设定/` `追踪/` 等）。
 
@@ -136,4 +136,29 @@ node scripts/setup-cdp-chrome.js            # 启动可远程调试的 Chrome
 node scripts/repair-scripts.js
 node scripts/wordcount-pacer.js <项目目录> --target 4000
 node scripts/full-consistency-audit.js <项目目录>
+```
+
+---
+
+## G. 体检 / 跨章事实 / 记忆（T1 增强）
+
+| 脚本 | 作用 |
+|---|---|
+| `doctor.js` | 项目体检：结构 / 追踪文件 / 流水线状态 / 备份新鲜度 / （默认）最新章一致性 + 角色同步，一键健康报告 |
+| `continuity-ledger.js` | 跨章事实账本：确定性快筛全书「实体→属性→值」矛盾（左撇子变右撇子、死了又活等），无需 LLM，与 `consistency-checker.md` 子代理互补 |
+| `learn-bank.js` | 长期记忆沉淀库：LLM 抽取好写法后结构化存储，`query` 召回注入新章任务书 |
+
+```bash
+# 项目体检（写章前后各跑一次）
+node scripts/doctor.js <项目目录> [--json] [--no-subchecks]
+
+# 跨章事实矛盾快筛（整本书级，确定性）
+node scripts/continuity-ledger.js <项目目录> [--json]
+
+# 长期记忆沉淀库（LLM 供内容，脚本存读）
+node scripts/learn-bank.js <项目目录> add   --type 爽点套路 --content "..." [--tags "a,b"] [--chapter N] [--source "第N章"]
+node scripts/learn-bank.js <项目目录> query [--type X] [--tag T] [--kw "..."] [--limit N]
+node scripts/learn-bank.js <项目目录> list  [--type X] [--limit N]
+node scripts/learn-bank.js <项目目录> export [--md]
+node scripts/learn-bank.js <项目目录> stats
 ```

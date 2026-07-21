@@ -62,6 +62,9 @@ const DOMAINS = [
       { name: '浏览器 CDP', entry: 'references/browser-cdp.md', note: '登录态抓取 / 榜单' },
       { name: '追读力追踪', entry: 'scripts/tracking-updater.js reading-power', note: '钩子/爽点/微兑现/债务量化' },
       { name: '自动备份/续跑', entry: 'scripts/pipeline-gate.js backup|resume', note: '每章快照轮转、断点续跑' },
+      { name: '项目体检', entry: 'scripts/doctor.js', note: '结构/追踪/流水线/备份 一键健康体检' },
+      { name: '跨章事实账本', entry: 'scripts/continuity-ledger.js', note: '确定性快筛全书设定矛盾（无需 LLM）' },
+      { name: '长期记忆沉淀库', entry: 'scripts/learn-bank.js', note: '好写法沉淀 + 新章任务书召回' },
     ],
   },
 ];
