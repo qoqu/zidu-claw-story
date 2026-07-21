@@ -288,18 +288,64 @@ function afterChapter(projectDir, chapterNum, summary) {
   return 0;
 }
 
+// ===== 追读力（借鉴 webnovel-writer 设计思路，WB 原生纯 Markdown 重写） =====
+const RP_FILE = '追读力.md';
+function rpPath(projectDir) { return path.join(projectDir, TRACK_DIR, RP_FILE); }
+const RP_TPL = '# 追读力追踪\n\n> 用途：量化「读者追读动力」。每章写完后由 AI 从正文提取钩子/爽点/微兑现后记录，\n> 用于下一章任务书注入（剩余≤5 或超期的钩子必须处理），维持读者追更欲望。\n\n## 章节追读力快照\n';
+
+/**
+ * 记录/更新某章的追读力快照。
+ * @param {number} chapterNum
+ * @param {object} opts { hookType, hookStrength, coolpoints:[], micropayoffs:[], hardViolations:[], debt }
+ */
+function doReadingPower(projectDir, chapterNum, opts) {
+  const fp = rpPath(projectDir);
+  let content = readFile(fp) || RP_TPL;
+  const h = opts.hookType || '危机钩';
+  const hs = opts.hookStrength || 'medium';
+  const cps = (opts.coolpoints && opts.coolpoints.length) ? opts.coolpoints.join('、') : '—';
+  const mps = (opts.micropayoffs && opts.micropayoffs.length) ? opts.micropayoffs.join('、') : '—';
+  const hv = (opts.hardViolations && opts.hardViolations.length) ? opts.hardViolations.join('、') : '无';
+  const debt = (opts.debt === undefined || opts.debt === null) ? 0 : opts.debt;
+  const block =
+    `### 第${chapterNum}章\n` +
+    `- 钩子类型：${h}　强度：${hs}\n` +
+    `- 爽点模式：${cps}\n` +
+    `- 微兑现：${mps}\n` +
+    `- 硬约束违规：${hv}\n` +
+    `- 债务余额：${debt}\n`;
+  const re = new RegExp(`### 第${chapterNum}章[\\s\\S]*?(?=\\n### 第|$)`, 'm');
+  if (re.test(content)) {
+    content = content.replace(re, block.trimEnd());
+    log(`更新追读力：第${chapterNum}章`);
+  } else {
+    if (!content.includes('## 章节追读力快照')) content += '\n## 章节追读力快照\n';
+    content = content.replace('## 章节追读力快照\n', `## 章节追读力快照\n${block}`);
+    log(`记录追读力：第${chapterNum}章`);
+  }
+  log(`  钩子[${h}/${hs}] 爽点[${cps}] 微兑现[${mps}] 硬违规[${hv}] 债务[${debt}]`);
+  writeFile(fp, content);
+  return 0;
+}
+
 // ===== 极简 CLI 解析 =====
 function getOpt(args, name) {
   const i = args.indexOf(`--${name}`);
   if (i >= 0 && i + 1 < args.length) return args[i + 1];
   return undefined;
 }
+// 支持多个同名 --flag（如 --coolpoint A --coolpoint B），可间隔出现
 function getList(args, name) {
   const out = [];
-  let i = args.indexOf(`--${name}`);
-  while (i >= 0 && i + 1 < args.length && !args[i + 1].startsWith('--')) {
-    out.push(args[i + 1]);
-    i += 1;
+  const flag = `--${name}`;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] !== flag) continue;
+    let j = i + 1;
+    while (j < args.length && !args[j].startsWith('--')) {
+      out.push(args[j]);
+      j++;
+    }
+    i = j - 1; // 跳过本组值，继续扫描后续同名 flag
   }
   return out;
 }
@@ -392,6 +438,20 @@ function main() {
       return setMaterial(projectDir, m);
     }
 
+    case 'reading-power': {
+      const rp = {
+        hookType: getOpt(rest, 'hook-type'),
+        hookStrength: getOpt(rest, 'hook-strength'),
+        coolpoints: getList(rest, 'coolpoint'),
+        micropayoffs: getList(rest, 'micropayoff'),
+        hardViolations: getList(rest, 'hard-violation'),
+        debt: (() => { const d = getOpt(rest, 'debt'); return d === undefined ? undefined : parseFloat(d); })(),
+      };
+      const ch = parseInt(getOpt(rest, 'chapter'), 10) || getLastChapter(projectDir) || 0;
+      if (!ch) { err('缺少 --chapter N'); return 1; }
+      return doReadingPower(projectDir, ch, rp);
+    }
+
     default:
       err(`未知命令: ${command}`);
       return 1;
@@ -409,5 +469,5 @@ if (require.main === module) {
 
 module.exports = {
   addForeshadow, addTimeline, setCharacter, addItem, setEnv, addRepeat,
-  setMaterial, updateContext, afterChapter, doInit, getLastChapter,
+  setMaterial, updateContext, afterChapter, doInit, getLastChapter, doReadingPower,
 };

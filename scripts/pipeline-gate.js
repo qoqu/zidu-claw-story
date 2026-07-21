@@ -103,6 +103,78 @@ function fillTpl(tpl, chapterNum) {
   return tpl.replace(/\{\{N\}\}/g, n3).replace(/\{\{n\}\}/g, String(chapterNum));
 }
 
+// ===== 自动备份 + 断点续跑（借鉴 webnovel-writer 思路，WB 原生纯 Node 重写） =====
+const crypto = require('crypto');
+const LEDGER_FILE = 'run_ledger.json';
+function ledgerPath(projectDir) { return path.join(pipelineDir(projectDir), LEDGER_FILE); }
+function loadLedger(projectDir) {
+  const l = readJson(ledgerPath(projectDir));
+  if (!l) return { schema_version: 'zidu-run-ledger/v1', write: {} };
+  if (!l.write) l.write = {};
+  return l;
+}
+function saveLedger(projectDir, ledger) { writeJson(ledgerPath(projectDir), ledger); }
+function chKey(n) { return `chapter_${String(n).padStart(3, '0')}`; }
+function sha256File(p) {
+  try { return crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex'); } catch { return null; }
+}
+// 在 gate post 成功时记录步骤（供断点续跑判断）
+function recordStep(projectDir, chapterNum, step, artifactPath) {
+  const ledger = loadLedger(projectDir);
+  const key = chKey(chapterNum);
+  if (!ledger.write[key]) ledger.write[key] = { steps: {} };
+  if (!ledger.write[key].steps) ledger.write[key].steps = {};
+  ledger.write[key].steps[step] = {
+    status: 'completed',
+    at: new Date().toISOString(),
+    sig: artifactPath ? sha256File(path.join(projectDir, artifactPath)) : undefined,
+  };
+  saveLedger(projectDir, ledger);
+}
+// 返回第一个未完成的步骤名，或 'done'
+function resumeFrom(projectDir, chapterNum) {
+  const ledger = loadLedger(projectDir);
+  const steps = (ledger.write[chKey(chapterNum)] || {}).steps || {};
+  const order = Object.keys(loadSteps(projectDir));
+  for (const s of order) {
+    if (!steps[s] || steps[s].status !== 'completed') return s;
+  }
+  return 'done';
+}
+// 每章写完后自动备份（轮转保留最近 10 份）
+function doBackup(projectDir, chapterNum) {
+  const backupRoot = path.join(pipelineDir(projectDir), 'backups');
+  fs.mkdirSync(backupRoot, { recursive: true });
+  const ts = new Date().toISOString().replace(/[:.]/g, '-');
+  const name = `snapshot_ch${String(chapterNum).padStart(4, '0')}_${ts}`;
+  const dest = path.join(backupRoot, name);
+  fs.mkdirSync(dest, { recursive: true });
+  for (const f of ['正文', '大纲', '设定']) {
+    const src = path.join(projectDir, f);
+    if (fs.existsSync(src)) fs.cpSync(src, path.join(dest, f), { recursive: true });
+  }
+  const stateSrc = statePath(projectDir);
+  if (fs.existsSync(stateSrc)) fs.copyFileSync(stateSrc, path.join(dest, 'state.json'));
+  const snaps = fs.readdirSync(backupRoot).filter(x => x.startsWith('snapshot_ch')).sort();
+  for (const old of snaps.slice(0, -10)) {
+    fs.rmSync(path.join(backupRoot, old), { recursive: true, force: true });
+  }
+  log(`自动备份：第${chapterNum}章 → .pipeline/backups/${name}（保留最近 ${Math.min(snaps.length, 10)} 份）`);
+  return 0;
+}
+// 断点续跑：打印从哪步继续
+function doResume(projectDir, chapterNum) {
+  const from = resumeFrom(projectDir, chapterNum);
+  const steps = (loadLedger(projectDir).write[chKey(chapterNum)] || {}).steps || {};
+  log(`第${chapterNum}章续跑断点：${from === 'done' ? '已全部完成' : '从「' + from + '」步继续'}`);
+  for (const s of Object.keys(loadSteps(projectDir))) {
+    const ok = steps[s] && steps[s].status === 'completed';
+    console.log(`  ${s.padEnd(6)} ${ok ? '[✓]' : '[ ]'}`);
+  }
+  if (from !== 'done') console.log(`\n> 请从 ${from} 步重新执行流水线（recordStep 会重记该步）。`);
+  return 0;
+}
+
 // ===== status =====
 function doStatus(projectDir) {
   const steps = loadSteps(projectDir);
@@ -165,6 +237,12 @@ function doGate(action, step, projectDir, chapterArg) {
   state.steps[step] = true;
   if (chapterArg) state.currentChapter = parseInt(chapterArg, 10);
   saveState(projectDir, state);
+  // 同步记录到 run_ledger（断点续跑用）
+  try {
+    const chNum = chapterArg ? parseInt(chapterArg, 10) : (state.currentChapter || 0);
+    const artPath = def.artifact ? fillTpl(def.artifact, chNum || 0) : null;
+    if (chNum) recordStep(projectDir, chNum, step, artPath);
+  } catch (_) { /* ledger 失败不影响主流程 */ }
   log(`Step ${step} 完成，已写入 .pipeline/state.json`);
   return 0;
 }
@@ -237,6 +315,24 @@ function main() {
     return 1;
   }
 
+  if (sub === 'backup') {
+    const projectDir = argv[1];
+    const chIdx = argv.indexOf('--chapter');
+    const chapterNum = chIdx >= 0 ? parseInt(argv[chIdx + 1], 10) : getContextChapter(projectDir);
+    if (!projectDir || !fileExists(projectDir)) { err('需提供有效的 <project-dir>'); return 1; }
+    if (!chapterNum) { err('缺少 --chapter N'); return 1; }
+    return doBackup(projectDir, chapterNum);
+  }
+
+  if (sub === 'resume') {
+    const projectDir = argv[1];
+    const chIdx = argv.indexOf('--chapter');
+    const chapterNum = chIdx >= 0 ? parseInt(argv[chIdx + 1], 10) : getContextChapter(projectDir);
+    if (!projectDir || !fileExists(projectDir)) { err('需提供有效的 <project-dir>'); return 1; }
+    if (!chapterNum) { err('缺少 --chapter N'); return 1; }
+    return doResume(projectDir, chapterNum);
+  }
+
   if (sub === 'qa') {
     const chapterFile = argv[1];
     const projectDir = argv[2];
@@ -264,4 +360,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { loadSteps, loadState, doGate, doQa, doStatus, DEFAULT_STEPS };
+module.exports = { loadSteps, loadState, doGate, doQa, doStatus, DEFAULT_STEPS, doBackup, doResume, loadLedger, resumeFrom };

@@ -1,6 +1,6 @@
 # 知识库索引（references/）
 
-`references/` 含 **206 篇** 子流程知识库（craft KB），**扁平组织**在目录根（无嵌套子目录）。同名多版本以 `<sub>_<name>.md` 前缀区分（例如 `deslop_anti-ai-writing.md`、`long-analyze_material-decomposition.md`），均为单一真相源的补充视角，无信息丢失。
+`references/` 含 **243 篇** 子流程知识库（craft KB）。其中 206 篇扁平组织在目录根；**`genres/` 子目录**含 37 个原创中文题材模板（开书可直接调用，见「5. 题材 / 类型写作」）。同名多版本以 `<sub>_<name>.md` 前缀区分（例如 `deslop_anti-ai-writing.md`、`long-analyze_material-decomposition.md`），均为单一真相源的补充视角，无信息丢失。
 
 > **AI 如何使用**：先读 `SKILL.md` 的「意图路由表」定位主文档（下表「主文档」列），再按主文档指引加载相关 craft KB。
 
@@ -43,6 +43,7 @@
 - `genre-prose-cards.md`（类型范例卡片）、`genre-readers.md`（读者画像）
 - `genre-trends.md`（趋势）、`genre-writing-formulas.md`（公式）、`genre-writing-techniques.md`（技法）
 - `female-audience-writing.md`（女频）、`commercial-core-methods.md`（商业核）
+- **`genres/`（37 个原创题材模板，开书可直接调用）**：`修仙.md` `都市异能.md` `科幻.md` `末世.md` `无限流.md` `宫斗宅斗.md` `规则怪谈.md` `西幻.md` 等。完整清单见目录列表，或 `node scripts/menu.js --json` 的 `write` 域「题材库(37)」项。
 
 ### 6. 角色设计
 - `character-basics.md`、`character-designer.md`、`character-design-methods.md`

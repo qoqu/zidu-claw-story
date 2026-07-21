@@ -32,7 +32,7 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 | 📊 选 | 起点 / 番茄 / 晋江 / 盐言扫榜选题 | `references/long-scan.md`、`references/short-scan.md` |
 | ✨ 净 | 去 AI 味、生成封面图 | `references/deslop.md`、`references/cover.md` |
 | 🗂 查 | 审查体检、导入已有书、初始化环境 | `references/review.md`、`references/import.md`、`references/setup.md` |
-| 🛡 控 | 量化质检、伏笔/时间线/角色/物品追踪、浏览器 CDP 抓取 | `scripts/quality-gate.js`、`scripts/tracking-updater.js`、`scripts/pipeline-gate.js`、`references/browser-cdp.md` |
+| 🛡 控 | 量化质检、伏笔/时间线/角色/物品追踪、追读力量化、自动备份/断点续跑、浏览器 CDP 抓取 | `scripts/quality-gate.js`、`scripts/tracking-updater.js`、`scripts/pipeline-gate.js`、`references/browser-cdp.md` |
 
 ## 一、意图路由表
 
@@ -52,6 +52,9 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 | 浏览器操控 | 浏览器、抓取、登录态、CDP | 见 `references/browser-cdp.md` + `scripts/setup-cdp-chrome.js` |
 | 量化质检 | 质检、质量门禁、查禁用词、评分 | 见下方「二、量化质检」 |
 | 追踪/流水线 | 伏笔、时间线、角色状态、物品、闸门 | 见下方「三、追踪与流水线」 |
+| 追读力追踪 | 追读力、读者动力、钩子/爽点/微兑现量化 | 见下方「三、追踪与流水线」→ `tracking-updater.js reading-power` |
+| 自动备份/续跑 | 备份、断点续跑、误删恢复 | 见下方「三、追踪与流水线」→ `pipeline-gate.js backup`/`resume` |
+| 题材库(37) | 选题材、题材模板、开书设定基底 | 读 `references/genres/` 下对应题材 `.md` |
 | 查故事资料 | 查角色、查伏笔、查进度、写到哪了 | 主线程用 Read/Grep 检索项目 `设定/` `追踪/` `大纲/`（见「四、WB 适配」降级说明） |
 
 > 意图模糊时，先匹配上表；无法匹配则询问用户想做什么（从表中选）。说"我想写小说"但未指定篇幅，先问长篇/短篇再路由。
@@ -82,6 +85,7 @@ node scripts/tracking-updater.js <项目目录> add-item --name "..." --loc "...
 node scripts/tracking-updater.js <项目目录> set-env --key "..." --value "..."
 node scripts/tracking-updater.js <项目目录> add-repeat --content "..." --location "..." --count N --alt "..."
 node scripts/tracking-updater.js <项目目录> set-material --name "..." --status "..." --chapter N
+node scripts/tracking-updater.js <项目目录> reading-power --chapter N --hook-type 危机钩 --hook-strength strong --coolpoint "..." [--coolpoint "..."] --micropayoff "..." [--hard-violation HARD-xxx] [--debt 0]
 ```
 > 管理 `追踪/` 下 8 类文件（伏笔/时间线/角色状态/物品/环境/重复语句/素材/上下文）。`after-chapter` 一键写上下文+字数。
 
@@ -91,6 +95,8 @@ node scripts/pipeline-gate.js status <项目目录>
 node scripts/pipeline-gate.js gate pre  <step> <项目目录>            # step: read|write|qa|track
 node scripts/pipeline-gate.js gate post <step> <项目目录> --chapter N
 node scripts/pipeline-gate.js qa <章节.md> <项目目录> [--chapter N] [--genre xxx] [--threshold 90]
+node scripts/pipeline-gate.js backup <项目目录> --chapter N        # 每章写完后自动快照（轮转保留最近 10 份）
+node scripts/pipeline-gate.js resume <项目目录> --chapter N        # 断点续跑：打印从哪步继续
 ```
 - 状态机存于 WB 原生 `.pipeline/state.json`。
 - **门禁语义固化于代码**：`qa` 质量**通过(exit 0)时自动标记 qa 完成**；**阻断(exit 2/3)绝不标记**——避免"带病章节"继续 track。
@@ -113,7 +119,7 @@ node scripts/pipeline-gate.js qa <章节.md> <项目目录> [--chapter N] [--gen
 1. 脚本统一在 `scripts/`，用 `node scripts/<name>.js` 调用；脚本间用 `__dirname` 互相定位，无需额外配置。
 2. 子流程知识库在 `references/`；路由后读对应 `references/<sub>.md` 主文档，按其中指引加载其下 craft KB（如 `references/long-write/genre-prose-cards/`）。
 3. 项目文件结构（`设定/` `大纲/` `正文/` `追踪/` `对标/`）遵循本工具箱约定，详见各 `references/<sub>.md`。
-4. 写章标准流程（WB 手动版）：写正文 → `normalize-punctuation.js` 标点预检 → `check-ai-patterns.js` 去味预检 → `quality-gate.js` 硬门禁（exit 0 才过）→ `tracking-updater.js after-chapter` + 各语义追踪 → `pipeline-gate.js gate post qa/track` 标记完成。
+4. 写章标准流程（WB 手动版）：开书时从 `references/genres/` 选题材模板作为设定基底 → 写正文 → `normalize-punctuation.js` 标点预检 → `check-ai-patterns.js` 去味预检 → `quality-gate.js` 硬门禁（exit 0 才过）→ `tracking-updater.js after-chapter` + 各语义追踪（含 `reading-power` 追读力）→ `pipeline-gate.js gate post qa/track` 标记完成 → `pipeline-gate.js backup --chapter N` 自动备份。中途失败用 `pipeline-gate.js resume --chapter N` 查看断点续跑。
 
 ---
 

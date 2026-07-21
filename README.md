@@ -4,14 +4,17 @@
 
 把**网文写作全流程**（长篇/短篇/拆文/扫榜/去味/封面/导入/初始化）与**量化质检**（quality-gate 硬门禁）+ **追踪流水线**（tracking-updater / pipeline-gate）整合为**一个技能包**，无外部依赖、无宿主私有契约。
 
-当前版本：**1.0.0**（见 `VERSION`）。
+当前版本：**1.1.0**（见 `VERSION`）。
 
 ## ✨ 特性
 
 - **全流程覆盖**：开书 → 大纲 → 连载/日更 → 续写 → 完结，长短篇均支持
-- **量化质检门禁**：10 项硬检查（禁用词/一致性/伏笔/字数/跨章重复/人设/情绪/爽点/缺口/评分），全绿才放行
+- **量化质检门禁**：9–10 项硬检查（禁用词/一致性/伏笔/字数/跨章重复/人设/情绪/爽点/缺口/评分），全绿才放行
 - **去 AI 味**：句式规则 + 禁用词库 + 退化检测，多脚本预检
 - **追踪流水线**：伏笔/时间线/角色状态/物品/环境/重复语句/素材/上下文 8 类自动追踪，闸门防"带病章节"继续
+- **追读力量化**：每章记录钩子类型/强度、爽点模式、微兑现、硬约束违规、债务余额，维持读者追更动力
+- **自动备份/断点续跑**：每章写完后快照轮转（保留最近 10 份），失败可从断点续跑
+- **37 题材库**：开书即选中文网文题材模板（修仙/都市/科幻/言情…）作为设定基底
 - **扫榜选题**：起点/番茄/晋江/刺猬猫/七猫/豆瓣/黑岩 爬虫，辅助选题
 - **浏览器操控**：基于 CDP 的 Chrome 自动化，支持登录态抓取
 - **跨宿主**：纯文件技能（`SKILL.md` + `references/` + `scripts/`），WB / OpenClaw / Hermes 均可直接加载
@@ -27,10 +30,10 @@ zidu-claw-story/
 ├── LICENSE               # MIT
 ├── docs/
 │   ├── install.md       # 多宿主安装与部署
-│   ├── scripts.md       # 31 个脚本命令参考
+│   ├── scripts.md       # 32 个脚本命令参考
 │   └── references.md    # 知识库（references/）索引
-├── scripts/              # 31 个 Node 脚本（质检/去味/追踪/爬虫/CDP）
-└── references/          # 206 篇子流程知识库（craft KB，扁平组织）
+├── scripts/              # 32 个 Node 脚本（质检/去味/追踪/爬虫/CDP/菜单）
+└── references/          # 243 篇子流程知识库（206 篇扁平 + genres/ 37 题材模板）
 ```
 
 ## 🚀 快速开始
@@ -60,12 +63,14 @@ node scripts/check-ai-patterns.js 正文/第N章.md
 # 4. 量化质检硬门禁（exit 0 才过）
 node scripts/quality-gate.js 正文/第N章.md ./ --genre dushi
 
-# 5. 追踪更新
+# 5. 追踪更新（含追读力）
 node scripts/tracking-updater.js ./ after-chapter --chapter N --summary "..."
+node scripts/tracking-updater.js ./ reading-power --chapter N --hook-type 危机钩 --hook-strength strong --coolpoint "..." [--micropayoff "..."] [--debt 0]
 
-# 6. 流水线闸门标记完成
+# 6. 流水线闸门标记完成 + 自动备份
 node scripts/pipeline-gate.js gate post qa ./ --chapter N
 node scripts/pipeline-gate.js gate post track ./ --chapter N
+node scripts/pipeline-gate.js backup ./ --chapter N
 ```
 
 ## 📖 命令速查
@@ -89,6 +94,7 @@ node scripts/tracking-updater.js <项目目录> add-foreshadow --chapter N --tex
 node scripts/tracking-updater.js <项目目录> add-timeline --chapter N --time "..." --desc "..." --chars "..."
 node scripts/tracking-updater.js <项目目录> set-character --name "..." --key "..." --value "..."
 node scripts/tracking-updater.js <项目目录> add-item --name "..." --loc "..." --status "..." --chapter N
+node scripts/tracking-updater.js <项目目录> reading-power --chapter N --hook-type 危机钩 --hook-strength strong --coolpoint "..." [--micropayoff "..."] [--debt 0]
 ```
 </details>
 
@@ -100,6 +106,8 @@ node scripts/pipeline-gate.js status <项目目录>
 node scripts/pipeline-gate.js gate pre  <step> <项目目录>            # step: read|write|qa|track
 node scripts/pipeline-gate.js gate post <step> <项目目录> --chapter N
 node scripts/pipeline-gate.js qa <章节.md> <项目目录> [--chapter N] [--genre xxx] [--threshold 90]
+node scripts/pipeline-gate.js backup <项目目录> --chapter N        # 每章快照轮转（保留最近 10 份）
+node scripts/pipeline-gate.js resume <项目目录> --chapter N       # 断点续跑：列出未完成的步骤
 ```
 </details>
 
@@ -110,7 +118,7 @@ node scripts/pipeline-gate.js qa <章节.md> <项目目录> [--chapter N] [--gen
 | 文档 | 内容 |
 |---|---|
 | [docs/install.md](docs/install.md) | WB / OpenClaw / Hermes 安装与部署 |
-| [docs/scripts.md](docs/scripts.md) | 31 个脚本分类与命令参考 |
+| [docs/scripts.md](docs/scripts.md) | 32 个脚本分类与命令参考 |
 | [docs/references.md](docs/references.md) | references/ 知识库主题索引 |
 
 ## ⚙️ 环境要求

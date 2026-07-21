@@ -17,6 +17,7 @@ const DOMAINS = [
     items: [
       { name: '长篇写作', entry: 'references/long-write.md', note: '黄金三章、人设、节奏、去味预检、质检闸门' },
       { name: '短篇写作', entry: 'references/short-write.md', note: '盐言 / 一万字短篇结构' },
+      { name: '题材库(37)', entry: 'references/genres/', note: '开书选题材模板作为设定基底' },
     ],
   },
   {
@@ -59,6 +60,8 @@ const DOMAINS = [
       { name: '量化质检', entry: 'scripts/quality-gate.js', note: '9–10 项硬门禁，exit0 放行 / exit2 阻断' },
       { name: '追踪流水线', entry: 'scripts/tracking-updater.js + pipeline-gate.js', note: '伏笔/时间线/角色/物品 + 四步闸门' },
       { name: '浏览器 CDP', entry: 'references/browser-cdp.md', note: '登录态抓取 / 榜单' },
+      { name: '追读力追踪', entry: 'scripts/tracking-updater.js reading-power', note: '钩子/爽点/微兑现/债务量化' },
+      { name: '自动备份/续跑', entry: 'scripts/pipeline-gate.js backup|resume', note: '每章快照轮转、断点续跑' },
     ],
   },
 ];
