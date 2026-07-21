@@ -164,7 +164,7 @@ const options = {
 for (let i = 2; i < process.argv.length; i += 1) {
   const arg = process.argv[i];
   if (arg === '--check') {
-    // Accepted for symmetry with normalize-punctuation.js; detection is always check-only.
+    // Accepted for symmetry with punct-precheck.js; detection is always check-only.
   } else if (arg === '--json') {
     options.json = true;
   } else if (arg.startsWith('--fail-on=')) {

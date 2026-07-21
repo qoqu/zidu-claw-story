@@ -130,9 +130,9 @@
 
 | 序号 | 检测项 | 严重度 | 脚本/方法 |
 |------|--------|--------|----------|
-| 1 | 字数达标 | BLOCK | `wordcount.js` |
+| 1 | 字数达标 | BLOCK | `chapter-wordcount.js` |
 | 2 | 禁用词+AI腔 | BLOCK | `style-lint.js` |
-| 3 | AI标点符号 | BLOCK | `punctuation-normalize.js` |
+| 3 | AI标点符号 | BLOCK | `punct-format.js` |
 | 4 | 一致性 | BLOCK | `consistency-check.js` |
 | 5 | 设定校验 | BLOCK | LLM 分析 |
 | 6 | 逻辑性 | WARN | LLM 分析 |

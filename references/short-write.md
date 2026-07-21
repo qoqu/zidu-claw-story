@@ -1,6 +1,6 @@
 ---
 name: story-short-write
-version: 1.4.0
+version: 1.4.1
 description: "短篇网文写作。辅助短篇小说创作，从构思到成稿，聚焦情绪拉扯与节奏把控。触发方式：/story-short-write、/写短篇、「帮我写一篇短篇」「写个盐言故事」。"
 ---
 # story-short-write：短篇网文写作
@@ -337,7 +337,7 @@ description: "短篇网文写作。辅助短篇小说创作，从构思到成稿
 ### Phase 4：精修打磨
 
 加载 `references/writing-workflow.md` 中的精修清单完成检查。
-重点：开头钩子、情绪曲线、反转铺垫、每句话价值、格式规范、AI 腔排查。文件模式先运行 `node scripts/check-ai-patterns.js --check --fail-on=blocking 正文.md`：blocking 先改正文并复扫；其他提示只作为读感风险，功能性写法标 `[需复核]`。再运行 `node scripts/normalize-punctuation.js 正文.md` 做标点兜底，并运行 `node scripts/check-degeneration.js --check 正文.md`；退化 blocking 要重新生成受影响段落，不靠润色。
+重点：开头钩子、情绪曲线、反转铺垫、每句话价值、格式规范、AI 腔排查。文件模式先运行 `node scripts/check-ai-patterns.js --check --fail-on=blocking 正文.md`：blocking 先改正文并复扫；其他提示只作为读感风险，功能性写法标 `[需复核]`。再运行 `node scripts/punct-precheck.js 正文.md` 做标点兜底，并运行 `node scripts/check-degeneration.js --check 正文.md`；退化 blocking 要重新生成受影响段落，不靠润色。
 
 #### Agent 调用：narrative-writer（去AI味）+ consistency-checker
 
@@ -394,7 +394,7 @@ description: "短篇网文写作。辅助短篇小说创作，从构思到成稿
 | [references/reversal-toolkit.md](references/reversal-toolkit.md) | 设计反转时 |
 | [references/short-write_quality-checklist.md](references/short-write_quality-checklist.md) | 精修检查时 |
 | [references/short-write_banned-words.md](references/short-write_banned-words.md) | 禁用词表 |
-| [scripts/normalize-punctuation.js](scripts/normalize-punctuation.js) | Phase 4 文件模式确定性标点收尾 |
+| [scripts/punct-precheck.js](scripts/punct-precheck.js) | Phase 4 文件模式确定性标点收尾 |
 | [scripts/check-ai-patterns.js](scripts/check-ai-patterns.js) | Phase 3 完成门槛与 Phase 4 复扫；报告高危 AI 句式、破折号、碎句号、长段落、微动作复读、抽象总结、套词/比喻密度、解释链、系统公告腔、提纲感短段、低连接密度 |
 | [scripts/check-degeneration.js](scripts/check-degeneration.js) | Phase 3 完成门槛与 Phase 4 复扫；报告模型退化（复读/截断/工程词泄漏），blocking 需重新生成 |
 | [references/dialogue-mastery.md](references/dialogue-mastery.md) | 写对话时 |

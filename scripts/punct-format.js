@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const USAGE = `Usage: node punctuation-normalize.js <file> [options]
+const USAGE = `Usage: node punct-format.js <file> [options]
 
 规范化AI生成内容的标点符号，清理AI特殊标点和不可见字符。
 支持上下文感知的破折号替换和引号风格切换。
@@ -16,9 +16,9 @@ Options:
   --quote-mode MODE   引号模式：keep（默认）| ascii（半角）| yan（盐言「」）
 
 示例：
-  node punctuation-normalize.js 正文/第001章.md --check
-  node punctuation-normalize.js 正文/第001章.md --fix
-  node punctuation-normalize.js 正文/第001章.md --fix --quote-mode yan`;
+  node punct-format.js 正文/第001章.md --check
+  node punct-format.js 正文/第001章.md --fix
+  node punct-format.js 正文/第001章.md --fix --quote-mode yan`;
 
 // AI特殊标点检测正则
 const AI_PUNCTUATION = /[\u2014\u2013\u201C\u201D\u2018\u2019\u2026\u00A0\u202F]/g;
@@ -193,7 +193,7 @@ function checkPunctuationIssues(text) {
   return issues;
 }
 
-// --- Enhanced normalization (from normalize-punctuation.js) ---
+// --- Enhanced normalization (from punct-precheck.js) ---
 
 function hasYamlFrontMatter(lines) {
   if (!lines[0] || lines[0].trim() !== '---') return false;

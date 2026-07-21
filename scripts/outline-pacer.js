@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const USAGE = `Usage: node wordcount-pacer.js <outline-file> [--json] [--target-words N]
+const USAGE = `Usage: node outline-pacer.js <outline-file> [--json] [--target-words N]
 
 Generate word count pacing guide from chapter outline.
 

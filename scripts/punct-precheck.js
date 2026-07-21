@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const USAGE = `Usage: node normalize-punctuation.js [--check] [--quote-mode keep|ascii|yan] <file...>
+const USAGE = `Usage: node punct-precheck.js [--check] [--quote-mode keep|ascii|yan] <file...>
 
 Normalize正文 punctuation deterministically:
   - replace ellipses, em dashes, and double hyphens with Chinese punctuation

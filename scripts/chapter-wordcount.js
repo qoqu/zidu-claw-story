@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const USAGE = `Usage: node wordcount.js <chapter-file> [--target N] [--json]
+const USAGE = `Usage: node chapter-wordcount.js <chapter-file> [--target N] [--json]
 
 Count chapter word count using unified algorithm.
 

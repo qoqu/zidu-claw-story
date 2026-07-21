@@ -4,7 +4,7 @@
 
 把**网文写作全流程**（长篇/短篇/拆文/扫榜/去味/封面/导入/初始化）与**量化质检**（quality-gate 硬门禁）+ **追踪流水线**（tracking-updater / pipeline-gate）整合为**一个技能包**，无外部依赖、无宿主私有契约。
 
-当前版本：**1.4.0**（见 `VERSION`）。
+当前版本：**1.4.1**（见 `VERSION`）。
 
 ## ✨ 特性
 
@@ -39,9 +39,9 @@ zidu-claw-story/
 ├── LICENSE               # MIT
 ├── docs/
 │   ├── install.md       # 多宿主安装与部署
-│   ├── scripts.md       # 41 个脚本命令参考
+│   ├── scripts.md       # 40 个脚本命令参考
 │   └── references.md    # 知识库（references/）索引
-├── scripts/              # 41 个 Node 脚本（质检/去味/追踪/爬虫/CDP/体检/记忆/观/扩）
+├── scripts/              # 40 个 Node 脚本（质检/去味/追踪/爬虫/CDP/体检/记忆/观/扩）
 └── references/          # 243 篇子流程知识库（206 篇扁平 + genres/ 37 题材模板）
 ```
 
@@ -64,7 +64,7 @@ git clone https://github.com/qoqu/zidu-claw-story.git \
 #    读 references/long-write.md 按其执行，产出 正文/第N章.md
 
 # 2. 标点预检
-node scripts/normalize-punctuation.js 正文/第N章.md
+node scripts/punct-precheck.js 正文/第N章.md
 
 # 3. 去味预检
 node scripts/check-ai-patterns.js 正文/第N章.md
@@ -183,7 +183,7 @@ node scripts/promo-pack.js book    <项目目录> --platform 小红书 [--title 
 | 文档 | 内容 |
 |---|---|
 | [docs/install.md](docs/install.md) | WB / OpenClaw / Hermes 安装与部署 |
-| [docs/scripts.md](docs/scripts.md) | 41 个脚本分类与命令参考 |
+| [docs/scripts.md](docs/scripts.md) | 40 个脚本分类与命令参考 |
 | [docs/references.md](docs/references.md) | references/ 知识库主题索引 |
 
 ## ⚙️ 环境要求

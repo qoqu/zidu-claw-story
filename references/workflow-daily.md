@@ -147,7 +147,7 @@
 5. **对照细纲核对**（正文有没有按细纲写到）：新版细纲存在时，核对正文是否消费了内容概括五段式、情节安排多线、人物关系变化/出场顺序、代价兑现/收益兑现；并加三条 craft 兑现核对（不达标→修复）：① 爽点出手前是否有可指认的危机/期待铺垫段落？指不出=空洞 → 回 Step 2 补铺垫情节点（plot-emotion-system 倒推法）；② 装逼/打脸/揭露章是否写出在场配角差异化反应（集体震惊/各异），还是只写主角动作？没有 → 补在场配角反应（plot-core-methods）；③ 详略是否按目的词（爽点/卖点点展开、过渡点带过、信息密度交替），还是均匀注水？均匀 → 删过渡、扩爽点点。旧版细纲只核对核心事件、目标情绪、章首/章尾钩子和字数目标
 6. **伏笔盘点（仅本轮增量）**：只确认本批新增/推进/回收的伏笔已写入 `追踪/伏笔.md` 并更新状态；不得在日更流程中通读所有 session 或扫描全部正文做全量伏笔审计。全量伏笔审计只在 `/story-review` 或用户明确要求"全面检查伏笔"时执行
 7. **确定性收尾**：主会话对本批实际落盘正文运行 `node scripts/check-ai-patterns.js --check --fail-on=blocking 正文/第XXX章_*.md`；blocking 先改正文并复扫，advisory 只作读感提示，功能性写法标 `[需复核]`。
-   再运行 `node scripts/normalize-punctuation.js 正文/第XXX章_*.md`（默认 `--quote-mode keep`）清理无功能省略号、破折号、双连字符和独立分隔线。narrative-writer agent 不运行这些脚本。
+   再运行 `node scripts/punct-precheck.js 正文/第XXX章_*.md`（默认 `--quote-mode keep`）清理无功能省略号、破折号、双连字符和独立分隔线。narrative-writer agent 不运行这些脚本。
    - **退化防护**：再跑 `node scripts/check-degeneration.js --check 正文/第XXX章_*.md`。blocking 只重写受影响章节，最多 2 次；仍失败就报告证据让用户定夺。advisory 先看例外，确属工程词泄漏或退化再改。
 
 > 完整 Phase 5 检查清单见 SKILL.md Phase 5。

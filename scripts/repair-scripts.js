@@ -23,11 +23,11 @@ const REQUIRED_SCRIPTS = [
   'style-lint.js',
   'foreshadow-check.js',
   'quality-gate.js',
-  'normalize-punctuation.js',
+  'punct-precheck.js',
   'voice-check.js',
   'emotion-analyzer.js',
   'satisfaction-meter.js',
-  'wordcount-pacer.js',
+  'outline-pacer.js',
 ];
 
 function detectToolSourceDir() {

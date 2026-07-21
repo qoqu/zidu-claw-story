@@ -1,6 +1,6 @@
 # 脚本命令参考（scripts/）
 
-本目录含 **41 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
+本目录含 **40 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
 
 命令中的 `<项目目录>` 指你的小说工程根（含 `正文/` `设定/` `追踪/` 等）。
 
@@ -16,7 +16,7 @@
 | `style-lint.js` | 文风检查（措辞/病句） |
 | `consitency-check.js` | 一致性检查（人名/设定前后矛盾） |
 | `foreshadow-check.js` | 伏笔检查（overdue 未回收伏笔） |
-| `wordcount.js` | 字数检查（达标/节奏） |
+| `chapter-wordcount.js` | 字数检查（达标/节奏） |
 | `cross-chapter-check.js` | 跨章重复检查 |
 | `voice-check.js` | 人设/声音一致性 |
 | `emotion-analyzer.js` | 情绪曲线分析 |
@@ -32,7 +32,7 @@ node scripts/quality-gate.js <章节.md> <项目目录> [--json] [--genre dushi]
 # 单独跑某子检查（调试用）
 node scripts/style-lint.js <章节.md> <项目目录>
 node scripts/consitency-check.js <章节.md> <项目目录>
-node scripts/wordcount.js <章节.md> <项目目录>
+node scripts/chapter-wordcount.js <章节.md> <项目目录>
 node scripts/writing-scorer.js <章节.md> <项目目录> --threshold 90
 ```
 
@@ -44,14 +44,14 @@ node scripts/writing-scorer.js <章节.md> <项目目录> --threshold 90
 |---|---|
 | `check-ai-patterns.js` | AI 句式模式检测（"首先/其次/综上所述"等） |
 | `check-degeneration.js` | 退化检测（空洞/套话） |
-| `normalize-punctuation.js` | 标点预检（写章前） |
-| `punctuation-normalize.js` | 标点规范化（格式化） |
+| `punct-precheck.js` | 标点预检（写章前） |
+| `punct-format.js` | 标点规范化（格式化） |
 | `banned-words.js` | 禁用词检测 |
 
 ```bash
 node scripts/check-ai-patterns.js <章节.md>
 node scripts/check-degeneration.js <章节.md>
-node scripts/normalize-punctuation.js <章节.md>
+node scripts/punct-precheck.js <章节.md>
 node scripts/banned-words.js <章节.md> <项目目录>
 ```
 
@@ -129,13 +129,11 @@ node scripts/setup-cdp-chrome.js            # 启动可远程调试的 Chrome
 | 脚本 | 作用 |
 |---|---|
 | `repair-scripts.js` | 脚本自检/修复（路径与依赖校验） |
-| `wordcount-pacer.js` | 字数节奏 / 日更配速 |
-| `full-consistency-audit.js` | 全量一致性审计（整本书级） |
+| `outline-pacer.js` | 字数节奏 / 日更配速 |
 
 ```bash
 node scripts/repair-scripts.js
-node scripts/wordcount-pacer.js <项目目录> --target 4000
-node scripts/full-consistency-audit.js <项目目录>
+node scripts/outline-pacer.js <项目目录> --target 4000
 ```
 
 ---

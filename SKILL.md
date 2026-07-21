@@ -220,10 +220,37 @@ node scripts/promo-pack.js book    <项目目录> --platform 小红书 [--title 
 1. 脚本统一在 `scripts/`，用 `node scripts/<name>.js` 调用；脚本间用 `__dirname` 互相定位，无需额外配置。
 2. 子流程知识库在 `references/`；路由后读对应 `references/<sub>.md` 主文档，按其中指引加载其下 craft KB（如 `references/long-write/genre-prose-cards/`）。
 3. 项目文件结构（`设定/` `大纲/` `正文/` `追踪/` `对标/`）遵循本工具箱约定，详见各 `references/<sub>.md`。
-4. 写章标准流程（WB 手动版）：开书时从 `references/genres/` 选题材模板作为设定基底 → 写正文 → `normalize-punctuation.js` 标点预检 → `check-ai-patterns.js` 去味预检 → `quality-gate.js` 硬门禁（exit 0 才过）→ `tracking-updater.js after-chapter` + 各语义追踪（含 `reading-power` 追读力）→ `pipeline-gate.js gate post qa/track` 标记完成 → `pipeline-gate.js backup --chapter N` 自动备份。中途失败用 `pipeline-gate.js resume --chapter N` 查看断点续跑。
+4. 写章标准流程（WB 手动版）：开书时从 `references/genres/` 选题材模板作为设定基底 → 写正文 → `punct-precheck.js` 标点预检 → `check-ai-patterns.js` 去味预检 → `quality-gate.js` 硬门禁（exit 0 才过）→ `tracking-updater.js after-chapter` + 各语义追踪（含 `reading-power` 追读力）→ `pipeline-gate.js gate post qa/track` 标记完成 → `pipeline-gate.js backup --chapter N` 自动备份。中途失败用 `pipeline-gate.js resume --chapter N` 查看断点续跑。
 
 ---
 
-## 六、致谢
+## 六、能力决策树（该用哪个）
+
+> 同名/近名脚本众多，按"想解决什么"直接定位，避免误用。
+
+**标点**
+- 写章前机械预检（清无功能省略号/破折号/双连字符/`---`）→ `scripts/punct-precheck.js`
+- 写章后格式化（清 AI 特殊标点+不可见字符、引号切换）→ `scripts/punct-format.js`
+
+**字数**
+- 单章字数是否达标 → `scripts/chapter-wordcount.js`
+- 从大纲生成日更配速表 → `scripts/outline-pacer.js`
+
+**一致性 / 矛盾（四件套按层级选）**
+- 单章 vs 追踪文件结构（物品/季节/角色死亡重现/名字漂移）→ `scripts/consistency-check.js`
+- 跨章文本重复 / 洗稿指纹 → `scripts/cross-chapter-check.js`
+- 跨章事实矛盾（独生子/长子、左手/右手、死亡后活跃）→ `scripts/continuity-ledger.js`
+- 深度因果 / 设定推理（需 LLM 裁决）→ 读 `references/consistency-checker.md` 走子代理
+- 项目整体健康入口（会编排 consistency-check + character-sync）→ `scripts/doctor.js`
+
+**质量 / 去 AI 味（统一入口）**
+- 一键硬门禁（编排下面细分）→ `scripts/quality-gate.js`
+- 细分：AI 味模式 `check-ai-patterns.js`、禁用词 `style-lint.js`、退化检测 `check-degeneration.js`、文风/人设声 `voice-check.js`、情绪曲线 `emotion-analyzer.js`、满意度 `satisfaction-meter.js`、写作评分 `writing-scorer.js`
+
+**追踪 / 流水线 / 记忆 / 观 / 扩** → 见各自 `references/<sub>.md` 与 `docs/scripts.md`。
+
+> 已废弃：`full-consistency-audit.js`（原声称"整本书级审计"但未实现跨章矛盾，且被 doctor + consistency-check + continuity-ledger 覆盖，已于 v1.4.1 删除）。
+
+## 七、致谢
 
 致谢：oh-story及mimocode-story
