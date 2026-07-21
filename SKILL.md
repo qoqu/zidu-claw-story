@@ -33,6 +33,7 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 | ✨ 净 | 去 AI 味、生成封面图 | `references/deslop.md`、`references/cover.md` |
 | 🗂 查 | 审查体检、导入已有书、初始化环境 | `references/review.md`、`references/import.md`、`references/setup.md` |
 | 🛡 控 | 量化质检、伏笔/时间线/角色/物品追踪、追读力量化、自动备份/断点续跑、浏览器 CDP 抓取、项目体检、跨章事实账本、长期记忆沉淀库、节奏密度曲线、文风漂移检测、多项目仪表盘 | `scripts/quality-gate.js`、`scripts/tracking-updater.js`、`scripts/pipeline-gate.js`、`references/browser-cdp.md`、`scripts/doctor.js`、`scripts/continuity-ledger.js`、`scripts/learn-bank.js`、`scripts/pacing-density.js`、`scripts/style-drift.js`、`scripts/dashboard.js` |
+| 📦 扩 | 题材库检索/扩充、自动生成本书设定卡、多平台发布物料（章推/书评/求追读） | `scripts/genre-library.js`、`scripts/setting-cards.js`、`scripts/promo-pack.js` |
 
 ## 一、意图路由表
 
@@ -61,6 +62,9 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 | 文风漂移/代笔 | 文风漂移、代笔、AI 味突变、前后不一致 | 见下方「四·观」→ `scripts/style-drift.js` |
 | 仪表盘/多项目 | 多开书总览、所有书的进度/字数/健康 | 见下方「四·观」→ `scripts/dashboard.js` |
 | 题材库(37) | 选题材、题材模板、开书设定基底 | 读 `references/genres/` 下对应题材 `.md` |
+| 题材库检索/扩充 | 搜题材、按男女频/平台/标签筛、加新题材 | 见下方「四·扩」→ `scripts/genre-library.js` |
+| 生成本书设定卡 | 合并设定、从正文抽人物/组织候选、出 LLM 补全提示词 | 见下方「四·扩」→ `scripts/setting-cards.js` |
+| 多平台发布物料 | 章推、书评、求追读文案、按平台语气生成 | 见下方「四·扩」→ `scripts/promo-pack.js` |
 | 查故事资料 | 查角色、查伏笔、查进度、写到哪了 | 主线程用 Read/Grep 检索项目 `设定/` `追踪/` `大纲/`（见「四、WB 适配」降级说明） |
 
 > 意图模糊时，先匹配上表；无法匹配则询问用户想做什么（从表中选）。说"我想写小说"但未指定篇幅，先问长篇/短篇再路由。
@@ -163,6 +167,41 @@ node scripts/dashboard.js <根目录> [--json] [--html out.html]
 - 扫描根目录下所有含 `正文/` 或 `追踪/` 的子项目，聚合：章节数 / 总字数 / 最新章 / 最新追读密度 / doctor 健康度（内联轻量检查）/ 记忆沉淀条数 / 最近更新。
 - doctor 健康度用内联轻量检查（不逐项目 spawn 子进程）；需要深度体检仍用 `doctor.js`。
 - 用途：多开书时一屏总览；`--html` 出卡片视图。
+
+## 四·扩：题材库检索 / 设定卡 / 发布物料（T3 新增）
+
+三者均**确定性、零依赖**，与既有 LLM 子代理（`consistency-checker.md`）与爬虫（`*rank-scraper.js`）互补。
+
+### 题材库检索扩充 `genre-library.js`
+```bash
+node scripts/genre-library.js list
+node scripts/genre-library.js search --kw 扮猪吃虎
+node scripts/genre-library.js filter --gender 女频 --platform 番茄 --tag 甜宠
+node scripts/genre-library.js show 修仙
+node scripts/genre-library.js stats
+node scripts/genre-library.js add 国运降维 --gender 男频 --platform 起点,番茄 --tags 国运,爽文 --hook "全民穿越，国运绑定个人天赋"
+node scripts/genre-library.js scaffold 修仙 <项目目录>     # 把题材模板写入 设定/题材基底_xxx.md
+```
+- 索引 = 内置审定种子（37 篇的男女频/平台/标签归类）+ 解析每篇 `> **核心卖点**：` 行；`add` 创建的新题材带 `<!-- meta -->` 注释，list/filter 优先读取后回退种子。
+- 用途：37 篇看得眼花时，按"自己赛道"精准筛；`scaffold` 一键把题材模板铺成开书设定基底。
+
+### 自动生成本书设定卡 `setting-cards.js`
+```bash
+node scripts/setting-cards.js <项目目录> build          # 合并 设定/ 下所有 .md → 设定/本书设定卡.md
+node scripts/setting-cards.js <项目目录> extract [--json]  # 从正文确定性抽取人物/组织/地点候选（标 ⚠️ 待补全）
+node scripts/setting-cards.js <项目目录> llm-prompt       # 输出 LLM 补全提示词（结构化 JSON 设定卡）
+```
+- `build` 合并散落设定；`extract` 在设定稀疏时从正文用中文模式（引号说话人 / 称谓头衔 / 姓氏名）抽候选实体，明显误抓已过滤但仍需人工/LLM 核验。
+- 本脚本**不调用 LLM**，`llm-prompt` 把候选喂给 LLM 生成正式卡，保持宿主无关。
+
+### 多平台发布物料 `promo-pack.js`
+```bash
+node scripts/promo-pack.js chapter <项目目录> --chapter N --platform 起点 [--title 书名] [--llm]
+node scripts/promo-pack.js book    <项目目录> --platform 小红书 [--title 书名] [--llm]
+```
+- 按目标平台语气模板化生成章推 / 书评 / 求追读文案，遵循用户平台适配规则（微博信息流 / 小红书竖版种草 / 知乎长文 / 微信公号 / 头条 / B站 / 抖音竖版 等）。
+- 平台可选：起点 / 番茄 / 微博 / 小红书 / 知乎 / 微信 / 头条 / B站 / 抖音。
+- 书名取 `设定/书名.md` → `大纲/书名.md` → `--title` → 项目目录名；`--llm` 改为输出扩写提示词交 LLM 润色。
 
 ## 四、WorkBuddy 适配说明（与原生多宿主差异，已降级处理）
 

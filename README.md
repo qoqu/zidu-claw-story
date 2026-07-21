@@ -4,7 +4,7 @@
 
 把**网文写作全流程**（长篇/短篇/拆文/扫榜/去味/封面/导入/初始化）与**量化质检**（quality-gate 硬门禁）+ **追踪流水线**（tracking-updater / pipeline-gate）整合为**一个技能包**，无外部依赖、无宿主私有契约。
 
-当前版本：**1.3.0**（见 `VERSION`）。
+当前版本：**1.4.0**（见 `VERSION`）。
 
 ## ✨ 特性
 
@@ -20,6 +20,9 @@
 - **节奏密度曲线**：解析追读力数据合成每章追读密度分，ASCII 曲线 + 水章标记，一眼定位"凹下去"的章节
 - **文风漂移检测**：逐章量化句长/对话比/标点密度/用词丰富度，z-score 标记代笔/AI 味突变/状态断档
 - **多项目仪表盘**：一屏聚合所有书的进度/字数/追读密度/健康度/记忆条数，多开书必备
+- **题材库检索扩充**：37 题材按男女频/平台/标签精准筛选，支持 `add` 扩充新题材、`scaffold` 一键铺成开书设定基底
+- **自动生成本书设定卡**：合并散落设定 + 从正文确定性抽取人物/组织/地点候选，`llm-prompt` 出 LLM 补全提示词
+- **多平台发布物料**：章推/书评/求追读文案，按起点/番茄/微博/小红书/知乎/微信/头条/B站/抖音 平台语气模板化生成
 - **37 题材库**：开书即选中文网文题材模板（修仙/都市/科幻/言情…）作为设定基底
 - **扫榜选题**：起点/番茄/晋江/刺猬猫/七猫/豆瓣/黑岩 爬虫，辅助选题
 - **浏览器操控**：基于 CDP 的 Chrome 自动化，支持登录态抓取
@@ -36,9 +39,9 @@ zidu-claw-story/
 ├── LICENSE               # MIT
 ├── docs/
 │   ├── install.md       # 多宿主安装与部署
-│   ├── scripts.md       # 38 个脚本命令参考
+│   ├── scripts.md       # 41 个脚本命令参考
 │   └── references.md    # 知识库（references/）索引
-├── scripts/              # 38 个 Node 脚本（质检/去味/追踪/爬虫/CDP/体检/记忆/观）
+├── scripts/              # 41 个 Node 脚本（质检/去味/追踪/爬虫/CDP/体检/记忆/观/扩）
 └── references/          # 243 篇子流程知识库（206 篇扁平 + genres/ 37 题材模板）
 ```
 
@@ -151,6 +154,28 @@ node scripts/dashboard.js <根目录> [--json] [--html out.html]
 ```
 </details>
 
+</details>
+
+<details>
+<summary>题材库检索 / 设定卡 / 发布物料（T3）</summary>
+
+```bash
+# 题材库检索扩充
+node scripts/genre-library.js list
+node scripts/genre-library.js filter --gender 女频 --platform 番茄 --tag 甜宠
+node scripts/genre-library.js add 国运降维 --gender 男频 --platform 起点,番茄 --tags 国运,爽文 --hook "全民穿越，国运绑定个人天赋"
+node scripts/genre-library.js scaffold 修仙 <项目目录>      # → 设定/题材基底_修仙.md
+
+# 自动生成本书设定卡
+node scripts/setting-cards.js <项目目录> build
+node scripts/setting-cards.js <项目目录> extract [--json]
+node scripts/setting-cards.js <项目目录> llm-prompt
+
+# 多平台发布物料（章推 / 书评·求追读）
+node scripts/promo-pack.js chapter <项目目录> --chapter N --platform 起点 [--title 书名] [--llm]
+node scripts/promo-pack.js book    <项目目录> --platform 小红书 [--title 书名] [--llm]
+```
+
 完整脚本清单见 [docs/scripts.md](docs/scripts.md)。
 
 ## 📚 文档
@@ -158,7 +183,7 @@ node scripts/dashboard.js <根目录> [--json] [--html out.html]
 | 文档 | 内容 |
 |---|---|
 | [docs/install.md](docs/install.md) | WB / OpenClaw / Hermes 安装与部署 |
-| [docs/scripts.md](docs/scripts.md) | 38 个脚本分类与命令参考 |
+| [docs/scripts.md](docs/scripts.md) | 41 个脚本分类与命令参考 |
 | [docs/references.md](docs/references.md) | references/ 知识库主题索引 |
 
 ## ⚙️ 环境要求

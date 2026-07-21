@@ -76,6 +76,15 @@ const DOMAINS = [
       { name: '多项目仪表盘', entry: 'scripts/dashboard.js', note: '聚合所有书的进度/字数/追读密度/健康度/记忆条数' },
     ],
   },
+  {
+    key: 'expand',
+    title: '扩  —— 题材库检索 / 设定卡 / 发布物料（Tier 3 增强）',
+    items: [
+      { name: '题材库检索扩充', entry: 'scripts/genre-library.js', note: 'list/search/filter/show/add/stats/scaffold，37 题材按男女频/平台/标签筛' },
+      { name: '自动生成本书设定卡', entry: 'scripts/setting-cards.js', note: 'build 合并设定 / extract 抽候选实体 / llm-prompt 出补全提示词' },
+      { name: '多平台发布物料', entry: 'scripts/promo-pack.js', note: '章推/书评/求追读，按起点/番茄/微博/小红书等平台语气生成' },
+    ],
+  },
 ];
 
 if (asJson) {

@@ -1,6 +1,6 @@
 # 脚本命令参考（scripts/）
 
-本目录含 **38 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
+本目录含 **41 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
 
 命令中的 `<项目目录>` 指你的小说工程根（含 `正文/` `设定/` `追踪/` 等）。
 
@@ -186,4 +186,36 @@ node scripts/style-drift.js <项目目录> [--json] [--html out.html] [--z 1.5]
 # 多项目仪表盘（多开书时总览）
 node scripts/dashboard.js <根目录> [--json] [--html out.html]
 #   → 根目录：含多个子项目（各含 正文/ 或 追踪/）的父目录
+```
+
+---
+
+## I. 题材库 / 设定卡 / 发布物料（T3 增强）
+
+均为确定性、零依赖，与 LLM 类 `consistency-checker.md`、爬虫族互补。
+
+| 脚本 | 作用 |
+|---|---|
+| `genre-library.js` | 题材库检索扩充：list / search / filter（按男女频·平台·标签）/ show / stats / add（新题材带 meta）/ scaffold（题材模板铺成开书设定基底） |
+| `setting-cards.js` | 自动生成本书设定卡：build（合并 `设定/` 所有 .md → `本书设定卡.md`）/ extract（正文确定性抽人物·组织·地点候选，标 ⚠️）/ llm-prompt（输出 LLM 补全提示词） |
+| `promo-pack.js` | 多平台发布物料：chapter（章推）/ book（书评·求追读），按起点/番茄/微博/小红书/知乎/微信/头条/B站/抖音 语气模板化生成；`--llm` 改出扩写提示词 |
+
+```bash
+# 题材库检索
+node scripts/genre-library.js list
+node scripts/genre-library.js search --kw 扮猪吃虎
+node scripts/genre-library.js filter --gender 女频 --platform 番茄 --tag 甜宠
+node scripts/genre-library.js show 修仙
+node scripts/genre-library.js stats
+node scripts/genre-library.js add 国运降维 --gender 男频 --platform 起点,番茄 --tags 国运,爽文 --hook "全民穿越，国运绑定个人天赋"
+node scripts/genre-library.js scaffold 修仙 <项目目录>      # → 设定/题材基底_修仙.md
+
+# 设定卡
+node scripts/setting-cards.js <项目目录> build
+node scripts/setting-cards.js <项目目录> extract [--json]
+node scripts/setting-cards.js <项目目录> llm-prompt
+
+# 发布物料
+node scripts/promo-pack.js chapter <项目目录> --chapter N --platform 起点 [--title 书名] [--llm]
+node scripts/promo-pack.js book    <项目目录> --platform 小红书 [--title 书名] [--llm]
 ```
