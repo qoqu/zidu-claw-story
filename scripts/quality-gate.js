@@ -11,6 +11,7 @@ Unified quality gate that runs all checks and blocks output if standards aren't 
 
 Checks:
   1. style-lint       — Level 1 banned words → BLOCK
+     ai-patterns     — AI 散文痕迹（抽象总结/套词/陈词/比喻/推理链/微动作）→ BLOCK (blocking 类)
   2. consistency      — Item/environment/character/timeline errors → BLOCK
   3. foreshadow       — Overdue foreshadowing (>50 chapters) → BLOCK
   4. wordcount        — Chapter word count < target 90% → BLOCK
@@ -31,6 +32,7 @@ Options:
   --score N           直接传入评分结果（跳过 LLM 评审，仅做阈值判断）
   --threshold N       评分通过阈值（默认: 90）
   --skip-lint         Skip style-lint check
+  --skip-aipatterns  Skip check-ai-patterns check
   --skip-consistency  Skip consistency check
   --skip-foreshadow   Skip foreshadow check
   --skip-cross-chapter Skip cross-chapter duplicate check
@@ -98,6 +100,7 @@ function main() {
   const jsonMode = args.includes('--json');
   const fullMode = args.includes('--full');
   const skipLint = args.includes('--skip-lint');
+  const skipAipatterns = args.includes('--skip-aipatterns');
   const skipConsistency = args.includes('--skip-consistency');
   const skipForeshadow = args.includes('--skip-foreshadow');
   const skipCrossChapter = args.includes('--skip-cross-chapter');
@@ -132,6 +135,7 @@ function main() {
   const scriptsDir = path.join(__dirname);
   const results = {
     style_lint: null,
+    ai_patterns: null,
     consistency: null,
     foreshadow: null,
     wordcount: null,
@@ -154,6 +158,28 @@ function main() {
 
     if (data && data.status === 'fail') {
       blockers.push(`文风检查失败：${data.summary.level1} 个一级禁用词`);
+    }
+  }
+
+  if (!skipAipatterns) {
+    const script = path.join(scriptsDir, 'check-ai-patterns.js');
+    const r = runScript(script, ['--json', '--fail-on=blocking', chapterFile]);
+    let data = null;
+    try { data = JSON.parse(r.output); } catch {}
+    if (data && Array.isArray(data.findings)) {
+      const blocking = data.findings.filter(f => f.severity === 'blocking').length;
+      const advisory = data.findings.length - blocking;
+      results.ai_patterns = {
+        status: data.findings.length === 0 ? 'pass' : 'fail',
+        blocking,
+        advisory,
+        total: data.findings.length,
+      };
+      if (blocking > 0) {
+        blockers.push(`AI 散文痕迹：${blocking} 个阻断类（套词/陈词/抽象总结/微动作等），需去味`);
+      }
+    } else {
+      results.ai_patterns = { status: 'error', raw: r.output };
     }
   }
 
@@ -335,6 +361,12 @@ function main() {
     const s = results.style_lint;
     const icon = s.status === 'pass' ? '✅' : (s.status === 'fail' ? '❌' : '⚠️');
     console.log(`${icon} 文风检查：${s.status === 'pass' ? '通过' : `${s.summary?.level1 || 0} 个一级禁用词`}`);
+  }
+
+  if (results.ai_patterns) {
+    const s = results.ai_patterns;
+    const icon = s.status === 'pass' ? '✅' : (s.status === 'error' ? '⚠️' : (s.blocking > 0 ? '❌' : '⚠️'));
+    console.log(`${icon} AI 散文痕迹：${s.status === 'pass' ? '通过' : `${s.blocking} 阻断 / ${s.advisory} 提示`}`);
   }
 
   if (results.consistency) {

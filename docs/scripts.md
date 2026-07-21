@@ -12,7 +12,7 @@
 
 | 脚本 | 作用 |
 |---|---|
-| `quality-gate.js` | 统一质量门禁入口（10 项检查全绿才放行） |
+| `quality-gate.js` | 统一质量门禁入口（双道去味：style-lint + check-ai-patterns；其余检查全绿才放行） |
 | `style-lint.js` | 文风检查（措辞/病句） |
 | `consitency-check.js` | 一致性检查（人名/设定前后矛盾） |
 | `foreshadow-check.js` | 伏笔检查（overdue 未回收伏笔） |

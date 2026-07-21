@@ -1,6 +1,6 @@
 # 知识库索引（references/）
 
-`references/` 含 **243 篇** 子流程知识库（craft KB）。其中 206 篇扁平组织在目录根；**`genres/` 子目录**含 37 个原创中文题材模板（开书可直接调用，见「5. 题材 / 类型写作」）。同名多版本以 `<sub>_<name>.md` 前缀区分（例如 `deslop_anti-ai-writing.md`、`long-analyze_material-decomposition.md`），均为单一真相源的补充视角，无信息丢失。
+`references/` 含 **243 篇** 子流程知识库（craft KB）。其中 206 篇扁平组织在目录根；**`genres/` 子目录**含 37 个原创中文题材模板（开书可直接调用，见「5. 题材 / 类型写作」）。同名多版本以 `<sub>_<name>.md` 前缀区分（例如 `long-analyze_material-decomposition.md`），均为单一真相源的补充视角，无信息丢失；`anti-ai-writing.md` 已合并各流程前缀副本（deslop_/long-write_/review_/setup_/short-analyze_）为单一真相源。
 
 > **AI 如何使用**：先读 `SKILL.md` 的「意图路由表」定位主文档（下表「主文档」列），再按主文档指引加载相关 craft KB。
 
@@ -24,7 +24,7 @@
 | `length-routing.md` | 篇幅路由 |
 
 ### 2. 去 AI 味 / 文风
-- `deslop.md`（主）、`deslop_anti-ai-writing.md`、`deslop_banned-words.md`
+- `deslop.md`（主）、`anti-ai-writing.md`、`deslop_banned-words.md`
 - `anti-ai-writing.md`、`banned-words.md`
 - `dialogue-mastery.md`（对话功力）、`format-and-structure.md`（格式与结构）
 
