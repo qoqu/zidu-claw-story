@@ -67,6 +67,15 @@ const DOMAINS = [
       { name: '长期记忆沉淀库', entry: 'scripts/learn-bank.js', note: '好写法沉淀 + 新章任务书召回' },
     ],
   },
+  {
+    key: 'inspect',
+    title: '观  —— 节奏曲线 / 漂移 / 仪表盘（Tier 2 数据层）',
+    items: [
+      { name: '节奏密度曲线', entry: 'scripts/pacing-density.js', note: '解析追读力.md，ASCII 曲线 + 水章标记 + HTML 线图' },
+      { name: '文风漂移检测', entry: 'scripts/style-drift.js', note: '逐章句长/对话比/标点/丰富度 z-score，标记漂移章' },
+      { name: '多项目仪表盘', entry: 'scripts/dashboard.js', note: '聚合所有书的进度/字数/追读密度/健康度/记忆条数' },
+    ],
+  },
 ];
 
 if (asJson) {

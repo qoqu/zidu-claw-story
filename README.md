@@ -4,7 +4,7 @@
 
 把**网文写作全流程**（长篇/短篇/拆文/扫榜/去味/封面/导入/初始化）与**量化质检**（quality-gate 硬门禁）+ **追踪流水线**（tracking-updater / pipeline-gate）整合为**一个技能包**，无外部依赖、无宿主私有契约。
 
-当前版本：**1.2.0**（见 `VERSION`）。
+当前版本：**1.3.0**（见 `VERSION`）。
 
 ## ✨ 特性
 
@@ -17,6 +17,9 @@
 - **项目体检（doctor）**：一键健康报告——结构 / 追踪文件 / 流水线状态 / 备份新鲜度，并委托既有脚本跑最新章一致性 + 角色同步
 - **跨章事实账本**：确定性快筛全书「实体→属性→值」矛盾（左撇子变右撇子、死了又活），无需 LLM，与一致性子代理互补
 - **长期记忆沉淀库**：LLM 抽取好写法后结构化存储，新章任务书 `query` 召回注入，越写越香
+- **节奏密度曲线**：解析追读力数据合成每章追读密度分，ASCII 曲线 + 水章标记，一眼定位"凹下去"的章节
+- **文风漂移检测**：逐章量化句长/对话比/标点密度/用词丰富度，z-score 标记代笔/AI 味突变/状态断档
+- **多项目仪表盘**：一屏聚合所有书的进度/字数/追读密度/健康度/记忆条数，多开书必备
 - **37 题材库**：开书即选中文网文题材模板（修仙/都市/科幻/言情…）作为设定基底
 - **扫榜选题**：起点/番茄/晋江/刺猬猫/七猫/豆瓣/黑岩 爬虫，辅助选题
 - **浏览器操控**：基于 CDP 的 Chrome 自动化，支持登录态抓取
@@ -33,9 +36,9 @@ zidu-claw-story/
 ├── LICENSE               # MIT
 ├── docs/
 │   ├── install.md       # 多宿主安装与部署
-│   ├── scripts.md       # 32 个脚本命令参考
+│   ├── scripts.md       # 38 个脚本命令参考
 │   └── references.md    # 知识库（references/）索引
-├── scripts/              # 35 个 Node 脚本（质检/去味/追踪/爬虫/CDP/体检/记忆）
+├── scripts/              # 38 个 Node 脚本（质检/去味/追踪/爬虫/CDP/体检/记忆/观）
 └── references/          # 243 篇子流程知识库（206 篇扁平 + genres/ 37 题材模板）
 ```
 
@@ -133,6 +136,21 @@ node scripts/learn-bank.js <项目目录> stats
 ```
 </details>
 
+<details>
+<summary>节奏曲线 / 文风漂移 / 多项目仪表盘（T2）</summary>
+
+```bash
+# 节奏密度曲线：写章后看节奏是否"凹"下去（水章 = 密度<阈值，默认45）
+node scripts/pacing-density.js <项目目录> [--json] [--html out.html] [--water 45]
+
+# 文风漂移检测：查代笔 / AI 味突变 / 状态断档（|z|>1.5 标记）
+node scripts/style-drift.js <项目目录> [--json] [--html out.html] [--z 1.5]
+
+# 多项目仪表盘：多开书时一屏总览（根目录含多个子项目）
+node scripts/dashboard.js <根目录> [--json] [--html out.html]
+```
+</details>
+
 完整脚本清单见 [docs/scripts.md](docs/scripts.md)。
 
 ## 📚 文档
@@ -140,7 +158,7 @@ node scripts/learn-bank.js <项目目录> stats
 | 文档 | 内容 |
 |---|---|
 | [docs/install.md](docs/install.md) | WB / OpenClaw / Hermes 安装与部署 |
-| [docs/scripts.md](docs/scripts.md) | 35 个脚本分类与命令参考 |
+| [docs/scripts.md](docs/scripts.md) | 38 个脚本分类与命令参考 |
 | [docs/references.md](docs/references.md) | references/ 知识库主题索引 |
 
 ## ⚙️ 环境要求

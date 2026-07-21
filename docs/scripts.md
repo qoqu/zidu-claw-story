@@ -1,6 +1,6 @@
 # 脚本命令参考（scripts/）
 
-本目录含 **35 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
+本目录含 **38 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
 
 命令中的 `<项目目录>` 指你的小说工程根（含 `正文/` `设定/` `追踪/` 等）。
 
@@ -161,4 +161,29 @@ node scripts/learn-bank.js <项目目录> query [--type X] [--tag T] [--kw "..."
 node scripts/learn-bank.js <项目目录> list  [--type X] [--limit N]
 node scripts/learn-bank.js <项目目录> export [--md]
 node scripts/learn-bank.js <项目目录> stats
+```
+
+---
+
+## H. 节奏 / 漂移 / 仪表盘（T2 数据层）
+
+复用 T1 的 `追踪/追读力.md` 时间序列与正文语料，做"看数据"层。三者均为确定性、零依赖，与 LLM 类的 `consistency-checker.md` 互补。
+
+| 脚本 | 作用 |
+|---|---|
+| `pacing-density.js` | 节奏密度曲线：解析 `追踪/追读力.md` 每章块，合成追读密度分(0-100)，ASCII 曲线 + 水章标记 + `--html` 折线图 |
+| `style-drift.js` | 文风漂移检测：逐章算句长/对话比/标点密度/用词丰富度，与全书均值比 z-score，标记 `\|z\|>1.5` 的漂移章 |
+| `dashboard.js` | 多项目仪表盘：扫描根目录下属项目，聚合章节数/总字数/最新章/最新追读密度/doctor 健康度/记忆条数 |
+
+```bash
+# 节奏密度曲线（写章后看节奏是否"凹"下去）
+node scripts/pacing-density.js <项目目录> [--json] [--html out.html] [--water 45]
+#   → 水章 = 密度低于阈值(默认45)的章节，建议补钩子/爽点/微兑现
+
+# 文风漂移检测（查代笔 / AI 味突变 / 状态断档）
+node scripts/style-drift.js <项目目录> [--json] [--html out.html] [--z 1.5]
+
+# 多项目仪表盘（多开书时总览）
+node scripts/dashboard.js <根目录> [--json] [--html out.html]
+#   → 根目录：含多个子项目（各含 正文/ 或 追踪/）的父目录
 ```

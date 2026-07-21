@@ -32,7 +32,7 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 | 📊 选 | 起点 / 番茄 / 晋江 / 盐言扫榜选题 | `references/long-scan.md`、`references/short-scan.md` |
 | ✨ 净 | 去 AI 味、生成封面图 | `references/deslop.md`、`references/cover.md` |
 | 🗂 查 | 审查体检、导入已有书、初始化环境 | `references/review.md`、`references/import.md`、`references/setup.md` |
-| 🛡 控 | 量化质检、伏笔/时间线/角色/物品追踪、追读力量化、自动备份/断点续跑、浏览器 CDP 抓取、项目体检、跨章事实账本、长期记忆沉淀库 | `scripts/quality-gate.js`、`scripts/tracking-updater.js`、`scripts/pipeline-gate.js`、`references/browser-cdp.md`、`scripts/doctor.js`、`scripts/continuity-ledger.js`、`scripts/learn-bank.js` |
+| 🛡 控 | 量化质检、伏笔/时间线/角色/物品追踪、追读力量化、自动备份/断点续跑、浏览器 CDP 抓取、项目体检、跨章事实账本、长期记忆沉淀库、节奏密度曲线、文风漂移检测、多项目仪表盘 | `scripts/quality-gate.js`、`scripts/tracking-updater.js`、`scripts/pipeline-gate.js`、`references/browser-cdp.md`、`scripts/doctor.js`、`scripts/continuity-ledger.js`、`scripts/learn-bank.js`、`scripts/pacing-density.js`、`scripts/style-drift.js`、`scripts/dashboard.js` |
 
 ## 一、意图路由表
 
@@ -57,6 +57,9 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 | 项目体检/把脉 | 体检、把脉、查健康、项目缺什么 | 见下方「三·增强」→ `scripts/doctor.js` |
 | 跨章矛盾/设定冲突 | 前后矛盾、左撇子变右撇子、死了又活 | 见下方「三·增强」→ `scripts/continuity-ledger.js` |
 | 记忆沉淀/好写法库 | 沉淀好写法、写法库、越写越香 | 见下方「三·增强」→ `scripts/learn-bank.js` |
+| 节奏曲线/水章 | 节奏、水章、哪章没劲、追读密度 | 见下方「四·观」→ `scripts/pacing-density.js` |
+| 文风漂移/代笔 | 文风漂移、代笔、AI 味突变、前后不一致 | 见下方「四·观」→ `scripts/style-drift.js` |
+| 仪表盘/多项目 | 多开书总览、所有书的进度/字数/健康 | 见下方「四·观」→ `scripts/dashboard.js` |
 | 题材库(37) | 选题材、题材模板、开书设定基底 | 读 `references/genres/` 下对应题材 `.md` |
 | 查故事资料 | 查角色、查伏笔、查进度、写到哪了 | 主线程用 Read/Grep 检索项目 `设定/` `追踪/` `大纲/`（见「四、WB 适配」降级说明） |
 
@@ -132,6 +135,34 @@ node scripts/learn-bank.js <项目目录> stats
 ```
 - LLM 从正文抽取「好用的写法」后写入 `记忆/写法沉淀.json`；新章任务书用 `query` 召回注入，**越写越香、不糊**。
 - type 建议：`爽点套路` / `人设高光` / `金句` / `节奏` / `设定钩子`。
+
+## 四·观：节奏曲线 / 文风漂移 / 多项目仪表盘（T2 新增）
+
+三者均**确定性、零依赖**，复用 T1 的 `追踪/追读力.md` 时间序列与正文语料，属于"看数据"层，与 `references/consistency-checker.md`（LLM 推理子代理）互补。
+
+### 节奏密度曲线 `pacing-density.js`
+```bash
+node scripts/pacing-density.js <项目目录> [--json] [--html out.html] [--water 45]
+```
+- 解析 `追踪/追读力.md` 每章块，合成**追读密度分(0-100)**：钩子强度 + 爽点模式数 + 微兑现数×1.5 − 硬约束违规数 + 债务微加成，再按全书最大值归一化。
+- 终端输出 ASCII 曲线 + **水章标记**（密度 < 阈值，默认 45）；`--html` 出 SVG 折线图（水章标红）。
+- 用途：写章后一眼看出"节奏凹下去"的章节，针对性补钩子/爽点/微兑现。
+
+### 文风漂移检测 `style-drift.js`
+```bash
+node scripts/style-drift.js <项目目录> [--json] [--html out.html] [--z 1.5]
+```
+- 逐章算文风指标：句长均、对话占比、标点密度、用词丰富度、段落数；与全书均值比 **z-score**，标记 `|z| > 1.5`（可 `--z` 调）的**漂移章**。
+- 用途：辅助识别代笔 / AI 味突变 / 写作状态断档。
+- 有效章节 < 3 章时退出（基线不可靠）。
+
+### 多项目仪表盘 `dashboard.js`
+```bash
+node scripts/dashboard.js <根目录> [--json] [--html out.html]
+```
+- 扫描根目录下所有含 `正文/` 或 `追踪/` 的子项目，聚合：章节数 / 总字数 / 最新章 / 最新追读密度 / doctor 健康度（内联轻量检查）/ 记忆沉淀条数 / 最近更新。
+- doctor 健康度用内联轻量检查（不逐项目 spawn 子进程）；需要深度体检仍用 `doctor.js`。
+- 用途：多开书时一屏总览；`--html` 出卡片视图。
 
 ## 四、WorkBuddy 适配说明（与原生多宿主差异，已降级处理）
 
