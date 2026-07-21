@@ -65,6 +65,9 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 | 题材库检索/扩充 | 搜题材、按男女频/平台/标签筛、加新题材 | 见下方「四·扩」→ `scripts/genre-library.js` |
 | 生成本书设定卡 | 合并设定、从正文抽人物/组织候选、出 LLM 补全提示词 | 见下方「四·扩」→ `scripts/setting-cards.js` |
 | 多平台发布物料 | 章推、书评、求追读文案、按平台语气生成 | 见下方「四·扩」→ `scripts/promo-pack.js` |
+| 发布排期/Runbook | 发布排期、逐章发布命令、写→发清单 | 见下方「四·扩」→ `scripts/promo-pack.js calendar|runbook` |
+| 选题→成书闭环 | 选题、开书、从热点到成书、写作流水线 | 见下方「四·流」→ `scripts/topic-to-book.js` |
+| 自测/回归 | 自测、回归、跑一遍脚本、别改坏 | 见下方「四·流」→ `scripts/selftest.js` |
 | 查故事资料 | 查角色、查伏笔、查进度、写到哪了 | 主线程用 Read/Grep 检索项目 `设定/` `追踪/` `大纲/`（见「四、WB 适配」降级说明） |
 
 > 意图模糊时，先匹配上表；无法匹配则询问用户想做什么（从表中选）。说"我想写小说"但未指定篇幅，先问长篇/短篇再路由。
@@ -203,6 +206,28 @@ node scripts/promo-pack.js book    <项目目录> --platform 小红书 [--title 
 - 平台可选：起点 / 番茄 / 微博 / 小红书 / 知乎 / 微信 / 头条 / B站 / 抖音。
 - 书名取 `设定/书名.md` → `大纲/书名.md` → `--title` → 项目目录名；`--llm` 改为输出扩写提示词交 LLM 润色。
 
+## 四·流：选题→成书闭环编排 / 自测套件（T4 新增）
+
+把既有零散能力串成**可复用的写作系统**，并加回归护栏，避免「40 个脚本各自为战、改一个崩一片」。
+
+### 选题→成书闭环 `topic-to-book.js`
+```bash
+node scripts/topic-to-book.js scan    [--kw 扮猪吃虎] [--platform 番茄] [--gender 男频]   # 离线题材风向（实时热榜需 rank-scraper，默认离线适配无头环境）
+node scripts/topic-to-book.js match   --topic "重生爽文"                                  # 选题匹配题材库
+node scripts/topic-to-book.js scaffold --genre 修仙 --title "我的书" [--gender 男频] [--platform 起点]   # 开书骨架（设定/正文/追踪/大纲/记忆 + 追踪文件 + 大纲模板）
+node scripts/topic-to-book.js plan    --dir <项目目录> [--words 3000]                     # 今日配速（章节数 + outline-pacer 结构配比）
+node scripts/topic-to-book.js review  --dir <项目目录>                                    # 追读复盘（字数/密度序列/水章预警/记忆条数）
+```
+- 不重复造轮子：通过 child_process 复用 `genre-library` / `outline-pacer` / `tracking-updater` / `pacing-density` / `learn-bank`；review 直接 require `pacing-density` 拿曲线。
+- scaffold 输出标准写作流水线提示（每章：写章 → tracking-updater → quality-gate → pacing-density → learn-bank）。
+
+### 自测套件 `selftest.js`
+```bash
+node scripts/selftest.js [--quiet] [--json]
+```
+- 阶段1 语法检查（`node --check` 每个脚本）→ 阶段2 启动冒烟（非网络/浏览器脚本跑 `--help`，断言不崩）→ 阶段3 功能冒烟（临时项目跑 tracking-updater init → dashboard → learn-bank → genre-library → outline-pacer）。
+- **改完任何脚本后先跑一遍**，确认没带崩其他脚本，再提交。
+
 ## 四、WorkBuddy 适配说明（与原生多宿主差异，已降级处理）
 
 | 原宿主能力 | 原生形态 | WB 下处理 |
@@ -248,6 +273,10 @@ node scripts/promo-pack.js book    <项目目录> --platform 小红书 [--title 
 - 细分：AI 味模式 `check-ai-patterns.js`、禁用词 `style-lint.js`、退化检测 `check-degeneration.js`、文风/人设声 `voice-check.js`、情绪曲线 `emotion-analyzer.js`、满意度 `satisfaction-meter.js`、写作评分 `writing-scorer.js`
 
 **追踪 / 流水线 / 记忆 / 观 / 扩** → 见各自 `references/<sub>.md` 与 `docs/scripts.md`。
+
+**选题→成书闭环 / 自测**
+- 从选题到开书骨架到追读复盘一条龙 → `scripts/topic-to-book.js`（scan / match / scaffold / plan / review）
+- 改完想确认没带崩其他脚本 → `scripts/selftest.js`
 
 > 已废弃：`full-consistency-audit.js`（原声称"整本书级审计"但未实现跨章矛盾，且被 doctor + consistency-check + continuity-ledger 覆盖，已于 v1.4.1 删除）。
 

@@ -1,6 +1,6 @@
 # 脚本命令参考（scripts/）
 
-本目录含 **40 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
+本目录含 **42 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
 
 命令中的 `<项目目录>` 指你的小说工程根（含 `正文/` `设定/` `追踪/` 等）。
 
@@ -171,7 +171,7 @@ node scripts/learn-bank.js <项目目录> stats
 |---|---|
 | `pacing-density.js` | 节奏密度曲线：解析 `追踪/追读力.md` 每章块，合成追读密度分(0-100)，ASCII 曲线 + 水章标记 + `--html` 折线图 |
 | `style-drift.js` | 文风漂移检测：逐章算句长/对话比/标点密度/用词丰富度，与全书均值比 z-score，标记 `\|z\|>1.5` 的漂移章 |
-| `dashboard.js` | 多项目仪表盘：扫描根目录下属项目，聚合章节数/总字数/最新章/最新追读密度/doctor 健康度/记忆条数 |
+| `dashboard.js` | 多项目仪表盘：扫描根目录下属项目，聚合章节数/总字数/最新章/最新追读密度/doctor 健康度/记忆条数；`--html` 卡片含每本书追读密度火花线(SVG)与健康度进度条 |
 
 ```bash
 # 节奏密度曲线（写章后看节奏是否"凹"下去）
@@ -196,7 +196,7 @@ node scripts/dashboard.js <根目录> [--json] [--html out.html]
 |---|---|
 | `genre-library.js` | 题材库检索扩充：list / search / filter（按男女频·平台·标签）/ show / stats / add（新题材带 meta）/ scaffold（题材模板铺成开书设定基底） |
 | `setting-cards.js` | 自动生成本书设定卡：build（合并 `设定/` 所有 .md → `本书设定卡.md`）/ extract（正文确定性抽人物·组织·地点候选，标 ⚠️）/ llm-prompt（输出 LLM 补全提示词） |
-| `promo-pack.js` | 多平台发布物料：chapter（章推）/ book（书评·求追读），按起点/番茄/微博/小红书/知乎/微信/头条/B站/抖音 语气模板化生成；`--llm` 改出扩写提示词 |
+| `promo-pack.js` | 多平台发布物料：chapter（章推）/ book（书评·求追读），按起点/番茄/微博/小红书/知乎/微信/头条/B站/抖音 语气模板化生成；`--llm` 改出扩写提示词；新增 calendar / runbook 子命令按平台+节奏生成逐章发布命令与检查清单（写→发闭环） |
 
 ```bash
 # 题材库检索
@@ -216,4 +216,33 @@ node scripts/setting-cards.js <项目目录> llm-prompt
 # 发布物料
 node scripts/promo-pack.js chapter <项目目录> --chapter N --platform 起点 [--title 书名] [--llm]
 node scripts/promo-pack.js book    <项目目录> --platform 小红书 [--title 书名] [--llm]
+
+# 发布排期 / Runbook（写→发闭环）
+node scripts/promo-pack.js calendar <项目目录> --platforms 微博,小红书,B站 --start 2026-07-22 --cadence daily [--chapters 30] [--out 排期.md]
+node scripts/promo-pack.js runbook  <项目目录> --platforms 微博,小红书,B站 [--out 发布Runbook.md]
+
+---
+
+## J. 选题→成书闭环 / 自测套件（T4 增强）
+
+把零散能力串成可复用系统，并加回归护栏。
+
+| 脚本 | 作用 |
+|---|---|
+| `topic-to-book.js` | 选题→成书闭环编排：scan（题材风向）/ match（选题匹配）/ scaffold（开书骨架）/ plan（每日配速）/ review（追读复盘），通过 child_process 复用 genre-library / outline-pacer / tracking-updater / pacing-density / learn-bank |
+| `selftest.js` | 自测套件：阶段1 语法检查 + 阶段2 启动冒烟 + 阶段3 功能冒烟（tracking-updater init → dashboard → learn-bank → genre-library → outline-pacer），回归护栏 |
+
+```bash
+# 选题→成书（从热点到开书骨架）
+node scripts/topic-to-book.js scan --kw 扮猪吃虎
+node scripts/topic-to-book.js match --topic "重生爽文"
+node scripts/topic-to-book.js scaffold --genre 修仙 --title "我的书" [--gender 男频] [--platform 起点]
+node scripts/topic-to-book.js plan    --dir <项目目录> [--words 3000]
+node scripts/topic-to-book.js review  --dir <项目目录>
+
+# 自测（改完任何脚本后跑一遍，防回归）
+node scripts/selftest.js [--quiet] [--json]
+```
+
+> 实时热榜需 rank-scraper（浏览器/CDP），scan 默认离线以适配无头环境。
 ```

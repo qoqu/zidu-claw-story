@@ -9,6 +9,8 @@
  * 用法：
  *   node scripts/promo-pack.js chapter <项目目录> --chapter N --platform 起点 [--title 书名] [--llm]
  *   node scripts/promo-pack.js book    <项目目录> --platform 小红书 [--title 书名] [--llm]
+ *   node scripts/promo-pack.js calendar <项目目录> --platforms 微博,小红书,B站 --start 2026-07-22 --cadence daily [--chapters 30] [--out 排期.md]
+ *   node scripts/promo-pack.js runbook  <项目目录> --platforms 微博,小红书,B站 [--out 发布Runbook.md]
  */
 
 const fs = require('fs');
@@ -122,18 +124,117 @@ function llmPrompt(kind, platform, vars) {
   ].filter(Boolean).join('\n');
 }
 
+// ===== 发布排期 / Runbook（L6 闭环，v1.5.0 新增）=====
+const CADENCE = { daily: 1, every2days: 2, every3days: 3, weekly: 7 };
+
+function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+function fmtLocal(dt) { return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`; }
+function parseLocal(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+function addDays(dt, n) { const x = new Date(dt); x.setDate(x.getDate() + n); return x; }
+const WK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+
+function resolvePlatforms(raw) {
+  const list = (raw || '微博,小红书,B站').split(',').map((s) => s.trim()).filter(Boolean);
+  const valid = list.filter((p) => PLATFORMS[p]);
+  const invalid = list.filter((p) => !PLATFORMS[p]);
+  if (invalid.length) console.error(C.yellow + `忽略未知平台：${invalid.join('/')}（可选：${Object.keys(PLATFORMS).join('/')}）` + C.reset);
+  return valid.length ? valid : ['微博', '小红书', 'B站'];
+}
+
+function cmdCalendar(args, projectDir) {
+  const getOpt = (k, def = '') => { const i = args.indexOf(k); return i >= 0 && args[i + 1] ? args[i + 1] : def; };
+  const platforms = resolvePlatforms(getOpt('--platforms'));
+  const startStr = getOpt('--start') || fmtLocal(new Date());
+  const cadence = getOpt('--cadence', 'daily');
+  const interval = CADENCE[cadence] || 1;
+  const chapters = parseInt(getOpt('--chapters', '30'), 10) || 30;
+  const title = getOpt('--title') || getTitle(projectDir || '.', '');
+  const out = getOpt('--out');
+
+  const start = parseLocal(startStr);
+  let md = `# 《${title}》发布排期\n\n`;
+  md += `- 起始日：${startStr}（${WK[start.getDay()]}）　节奏：${cadence}（每 ${interval} 天）\n`;
+  md += `- 平台：${platforms.join('、')}　共 ${chapters} 章\n`;
+  md += `- 物料生成：\`node promo-pack.js chapter <项目目录> --chapter N --platform X --title "${title}"\`（加 \`--llm\` 出扩写提示词）\n\n`;
+  for (let ch = 1; ch <= chapters; ch++) {
+    const dt = addDays(start, (ch - 1) * interval);
+    md += `## 第${ch}章 · ${fmtLocal(dt)}（${WK[dt.getDay()]}）\n`;
+    for (const p of platforms) {
+      md += `- ${p}：\`node promo-pack.js chapter <项目目录> --chapter ${ch} --platform ${p} --title "${title}"\`\n`;
+    }
+    md += '\n';
+  }
+  if (out) { fs.writeFileSync(out, md, 'utf-8'); console.log(C.green + `[PROMO] 排期已写出：${out}` + C.reset); }
+  else console.log(md);
+}
+
+function cmdRunbook(args, projectDir) {
+  const getOpt = (k, def = '') => { const i = args.indexOf(k); return i >= 0 && args[i + 1] ? args[i + 1] : def; };
+  const platforms = resolvePlatforms(getOpt('--platforms'));
+  const startStr = getOpt('--start') || fmtLocal(new Date());
+  const cadence = getOpt('--cadence', 'daily');
+  const interval = CADENCE[cadence] || 1;
+  const chapters = parseInt(getOpt('--chapters', '30'), 10) || 30;
+  const title = getOpt('--title') || getTitle(projectDir || '.', '');
+  const out = getOpt('--out') || '发布Runbook.md';
+
+  const start = parseLocal(startStr);
+  let md = `# 《${title}》发布 Runbook\n\n`;
+  md += `> 由 promo-pack runbook 生成，配合 content.md / images/ / post.txt 物料包完成写→发闭环。\n\n`;
+
+  md += `## 一、项目信息\n\n`;
+  md += `- 书名：《${title}》\n- 项目目录：${projectDir || '(未指定)'}\n`;
+  md += `- 平台：${platforms.join('、')}\n- 起始：${startStr}　节奏：${cadence}\n- 章节数：${chapters}\n\n`;
+
+  md += `## 二、各平台发布 Checklist\n\n`;
+  for (const p of platforms) {
+    const P = PLATFORMS[p];
+    md += `### ${p}\n- 调性：${P.tone}\n- 长度：${P.length}\n- 话题标签：${P.hashtag ? '是' : '否'}　emoji：${P.emoji ? '是' : '否'}\n`;
+    md += `- [ ] 文案已定稿（或经 \`--llm\` 润色）\n- [ ] 不剧透关键反转\n- [ ] 钩子前置、去 AI 味\n`;
+    md += `- [ ] 配图/封面就绪（images/）\n- [ ] 定时发布已设（见第三节）\n\n`;
+  }
+
+  md += `## 三、定时提醒（按节奏）\n\n`;
+  for (let ch = 1; ch <= chapters; ch++) {
+    const dt = addDays(start, (ch - 1) * interval);
+    md += `- **D${ch} ${fmtLocal(dt)}（${WK[dt.getDay()]}）**：发第${ch}章章推（${platforms.join('、')}）→ 评论区互动回复 → 记录追读变化\n`;
+  }
+  md += '\n';
+
+  md += `## 四、平台适配规则摘要\n\n`;
+  md += `| 平台 | 调性 | 长度 | 标签 | emoji |\n|------|------|------|------|-------|\n`;
+  for (const p of platforms) {
+    const P = PLATFORMS[p];
+    md += `| ${p} | ${P.tone} | ${P.length} | ${P.hashtag ? '✓' : '—'} | ${P.emoji ? '✓' : '—'} |\n`;
+  }
+  md += '\n';
+
+  md += `## 五、注意事项\n\n`;
+  md += `- 发布前过一遍 quality-gate，避免 AI 味文案被限流\n`;
+  md += `- 章推只留钩子不剧透；书宣强种草弱设定\n`;
+  md += `- 多平台语气不可混用（见第四节）\n`;
+  md += `- 追读回落章节，次日章推加"反转/回收伏笔"钩子拉回\n`;
+
+  fs.writeFileSync(out, md, 'utf-8');
+  console.log(C.green + `[PROMO] 发布 Runbook 已写出：${out}` + C.reset);
+  console.log(C.dim + `（提示：先 \`node promo-pack.js calendar --dir <项目目录> --platforms ${platforms.join(',')}\` 拿逐章命令）` + C.reset);
+}
+
 function main() {
   const args = process.argv.slice(2);
   const kind = args[0]; // chapter | book
   const projectDir = args[1];
-  const getOpt = (k) => { const i = args.indexOf(k); return i >= 0 && args[i + 1] ? args[i + 1] : ''; };
+  const getOpt = (k, def = '') => { const i = args.indexOf(k); return i >= 0 && args[i + 1] ? args[i + 1] : def; };
   const platform = getOpt('--platform') || '起点';
   const title = getOpt('--title');
   const asLlm = args.includes('--llm');
   const n = getOpt('--chapter') || (kind === 'chapter' ? '1' : '');
 
+  if (kind === 'calendar') { cmdCalendar(args, projectDir); return; }
+  if (kind === 'runbook') { cmdRunbook(args, projectDir); return; }
+
   if (!['chapter', 'book'].includes(kind) || !projectDir) {
-    console.error(C.red + '用法：chapter <项目目录> --chapter N --platform X [--title] [--llm] | book <项目目录> --platform X [--title] [--llm]' + C.reset);
+    console.error(C.red + '用法：chapter <项目目录> --chapter N --platform X [--title] [--llm] | book <项目目录> --platform X [--title] [--llm] | calendar <项目目录> [--platforms ...] [--start 日期] [--cadence daily] [--chapters N] [--out 文件] | runbook <项目目录> [--platforms ...] [--start 日期] [--cadence daily] [--chapters N] [--out 文件]' + C.reset);
     process.exit(2);
   }
   if (!fs.existsSync(projectDir)) { console.error(C.red + `项目目录不存在：${projectDir}` + C.reset); process.exit(2); }

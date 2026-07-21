@@ -83,6 +83,15 @@ const DOMAINS = [
       { name: '题材库检索扩充', entry: 'scripts/genre-library.js', note: 'list/search/filter/show/add/stats/scaffold，37 题材按男女频/平台/标签筛' },
       { name: '自动生成本书设定卡', entry: 'scripts/setting-cards.js', note: 'build 合并设定 / extract 抽候选实体 / llm-prompt 出补全提示词' },
       { name: '多平台发布物料', entry: 'scripts/promo-pack.js', note: '章推/书评/求追读，按起点/番茄/微博/小红书等平台语气生成' },
+      { name: '发布排期/Runbook', entry: 'scripts/promo-pack.js calendar|runbook', note: '按平台+节奏生成逐章发布命令与检查清单，写→发闭环' },
+    ],
+  },
+  {
+    key: 'flow',
+    title: '流  —— 选题→成书闭环 / 自测（T4 新增）',
+    items: [
+      { name: '选题→成书闭环', entry: 'scripts/topic-to-book.js', note: 'scan/match/scaffold/plan/review 串起扫榜→开书→追读复盘' },
+      { name: '自测套件', entry: 'scripts/selftest.js', note: '42 脚本语法/启动/功能三层冒烟，改一处不崩一片' },
     ],
   },
 ];
