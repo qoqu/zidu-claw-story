@@ -17,7 +17,7 @@
  *   node topic-to-book.js scan    [--kw 扮猪吃虎] [--platform 番茄] [--gender 男频]
  *   node topic-to-book.js scan    --from-rank [--refresh] [--rank-dir data/rank]   # 实时蓝海指数（--refresh 自动刷热榜）
  *   node topic-to-book.js match   --topic "重生爽文"
- *   node topic-to-book.js scaffold --genre 修仙 --title "我的书" [--dir 项目路径] [--gender 男频] [--platform 起点]
+ *   node topic-to-book.js scaffold --genre 修仙 --title "我的书" [--dir 项目路径] [--gender 男频] [--platform 起点] [--decision 选题决策.md]
  *   node topic-to-book.js plan    --dir <项目目录> [--words 3000] [--chapter N]
  *   node topic-to-book.js review  --dir <项目目录>
  */
@@ -161,13 +161,65 @@ function cmdMatch(argv) {
   return 0;
 }
 
-// ===== scaffold：开书骨架 =====
+// ===== 解析 选题决策.md（long-scan Phase 4 产出） =====
+// 取排在最前（可行性最高）的推荐选题作为开书起点；返回结构化字段供 scaffold / 下游消费
+function parseDecision(file) {
+  const c = fs.readFileSync(file, 'utf-8');
+  const doc = { rootTitle: '', scanDate: '', gender: '', platform: '', topics: [] };
+  const h0 = c.match(/^#\s*选题决策[:：]\s*(.+)$/m);
+  if (h0) doc.rootTitle = h0[1].trim();
+  const sd = c.match(/扫榜日期[:：]\s*(\S+)/);
+  if (sd) doc.scanDate = sd[1].trim();
+  const topicRe = /^###\s*选题\s*\d+\s*[:：]\s*(.+)$/;
+  let cur = null;
+  for (const ln of c.split('\n')) {
+    const tm = ln.match(topicRe);
+    if (tm) { cur = { heading: tm[1].trim(), platform: '', gender: '' }; doc.topics.push(cur); continue; }
+    if (!cur) continue;
+    let m;
+    if ((m = ln.match(/^\s*-\s*题材组合[:：]\s*(.+)$/))) { cur.genreCombo = m[1].trim(); cur.genreMain = m[1].split(/[+、/]/)[0].trim(); }
+    else if ((m = ln.match(/^\s*-\s*核心卖点[:：]\s*(.+)$/))) cur.sellPoint = m[1].trim();
+    else if ((m = ln.match(/^\s*-\s*差异化定位[:：]\s*(.+)$/))) cur.diff = m[1].trim();
+    else if ((m = ln.match(/^\s*-\s*目标读者[:：]\s*(.+)$/))) cur.audience = m[1].trim();
+    else if ((m = ln.match(/^\s*-\s*可行性[:：]\s*(.+)$/))) cur.feas = m[1].trim();
+    else if ((m = ln.match(/^\s*-\s*篇幅\/平台[:：]\s*(.+)$/))) { cur.lengthPlatform = m[1].trim(); const pm = m[1].match(/(起点|番茄|晋江|刺猬猫|飞卢|纵横|17K)/); if (pm) cur.platform = pm[1]; }
+    else if ((m = ln.match(/^\s*-\s*性别[:：]\s*(男频|女频)/))) cur.gender = m[1];
+  }
+  // 文档级平台/性别取第一个有值的选题块（就近），避免跨选题串味
+  for (const t of doc.topics) { if (t.platform) { doc.platform = t.platform; break; } }
+  for (const t of doc.topics) { if (t.gender) { doc.gender = t.gender; break; } }
+  return doc;
+}
+
+// ===== scaffold：开书骨架（可选消费 选题决策.md） =====
 function cmdScaffold(argv) {
-  const genre = getOpt(argv, '--genre');
-  const title = getOpt(argv, '--title');
-  const gender = getOpt(argv, '--gender', '男频');
-  const platform = getOpt(argv, '--platform', '起点');
-  if (!title) { err('用法：scaffold --genre 修仙 --title "我的书" [--dir 路径]'); return 1; }
+  const genreArg = getOpt(argv, '--genre');
+  const titleArg = getOpt(argv, '--title');
+  const decisionArg = getOpt(argv, '--decision');
+  const genderGiven = argv.includes('--gender');
+  const platformGiven = argv.includes('--platform');
+  let gender = getOpt(argv, '--gender', '男频');
+  let platform = getOpt(argv, '--platform', '起点');
+
+  // 解析 选题决策.md（long-scan Phase 4 产出）；显式 --decision 优先，否则看 CWD
+  let decision = null, decisionFile = null;
+  const cand = [];
+  if (decisionArg) cand.push(path.resolve(decisionArg));
+  cand.push(path.resolve('选题决策.md'));
+  for (const p of cand) {
+    if (fs.existsSync(p)) { try { decision = parseDecision(p); decisionFile = p; } catch (e) { warn('选题决策.md 解析失败，忽略：' + e.message); } break; }
+  }
+
+  // CLI 未给标题时，从决策文件取排在最前（可行性最高）的推荐选题作为默认书名
+  let title = titleArg;
+  let genre = genreArg;
+  if (decision) {
+    if (!title && decision.topics.length) title = decision.topics[0].heading.replace(/[\\/:*?"<>|]/g, '_').slice(0, 40);
+    if (!genre && decision.topics[0] && decision.topics[0].genreMain) genre = decision.topics[0].genreMain;
+    if (!genderGiven && decision.gender) gender = decision.gender;
+    if (!platformGiven && decision.platform) platform = decision.platform;
+  }
+  if (!title) { err('用法：scaffold --genre 修仙 --title "我的书" [--dir 路径] [--decision 选题决策.md]'); return 1; }
 
   const dir = path.resolve(getOpt(argv, '--dir', './' + title.replace(/[\\/:*?"<>|]/g, '_')));
   if (fs.existsSync(dir)) { err(`目录已存在：${dir}`); return 1; }
@@ -189,14 +241,26 @@ function cmdScaffold(argv) {
   // 4) 追读力.md 表头
   fs.writeFileSync(path.join(dir, '追踪', '追读力.md'),
     `# 追读力追踪\n\n> 每章写完后由 tracking-updater reading-power 写入，pacing-density 读取绘图。\n`, 'utf-8');
-  // 5) 大纲骨架（依题材标签给方向）
-  const outline = buildOutline(title, genre, gender, platform);
+  // 5) 大纲骨架（依题材标签 / 选题决策 给方向）
+  const topTopic = (decision && decision.topics.length) ? decision.topics[0] : null;
+  const outline = buildOutline(title, genre, gender, platform, topTopic);
   fs.writeFileSync(path.join(dir, '大纲', '大纲.md'), outline, 'utf-8');
+  // 6) 消费 选题决策.md：拷入项目根，供 long-write Phase1 / long-analyze Stage5 下游读取
+  if (decisionFile) {
+    try { fs.copyFileSync(decisionFile, path.join(dir, '选题决策.md')); }
+    catch (e) { warn('选题决策.md 拷入项目根失败：' + e.message); }
+  }
 
   log(`已生成项目骨架：${dir}`);
+  if (decision && topTopic) {
+    log(`📋 已消费 选题决策.md（扫榜日期 ${decision.scanDate || '未知'}）：以「${topTopic.heading}」为开书起点`);
+    info(`题材组合：${topTopic.genreCombo || genre}　核心卖点：${topTopic.sellPoint || '—'}`);
+    info(`差异化：${topTopic.diff || '—'}　目标读者：${topTopic.audience || '—'}`);
+  }
   console.log('');
   console.log(`${BOLD}目录结构${RESET}`);
   ['设定', '正文', '大纲', '追踪', '记忆'].forEach((d) => info(`${path.basename(dir)}/${d}/`));
+  if (decisionFile) info(`${path.basename(dir)}/选题决策.md（已拷入，下游写作/拆文自动读取）`);
   console.log('');
   console.log(`${BOLD}推荐写作流水线（每章循环）${RESET}`);
   info('1. 写 正文/第N章.md');
@@ -208,13 +272,25 @@ function cmdScaffold(argv) {
   return 0;
 }
 
-function buildOutline(title, genre, gender, platform) {
+function buildOutline(title, genre, gender, platform, topic) {
   const today = new Date().toISOString().slice(0, 10);
+  const genreLine = genre || (topic && topic.genreCombo) || '待定';
+  let decisionBlock = '';
+  if (topic) {
+    decisionBlock = `
+## 选题决策依据（来自 选题决策.md）
+- 题材组合：${topic.genreCombo || '—'}
+- 核心卖点：${topic.sellPoint || '—'}
+- 差异化定位：${topic.diff || '—'}
+- 目标读者：${topic.audience || '—'}
+- 可行性：${topic.feas || '—'}
+`;
+  }
   return `# 《${title}》大纲
 
-- 题材：${genre || '待定'}　性别：${gender}　主投平台：${platform}
+- 题材：${genreLine}　性别：${gender}　主投平台：${platform}
 - 创建日：${today}
-
+${decisionBlock}
 ## 一卷：铺垫与立人设（第1-10章）
 - 第1章：强开局钩子，3 段内抛出核心冲突
 - 第2-4章：金手指/异能亮相，第一次小爽点

@@ -224,13 +224,14 @@ node scripts/promo-pack.js book    <项目目录> --platform 小红书 [--title 
 node scripts/topic-to-book.js scan    [--kw 扮猪吃虎] [--platform 番茄] [--gender 男频]   # 离线题材风向
 node scripts/topic-to-book.js scan --from-rank [--refresh] --rank-dir data/rank   # 蓝海指数选题榜（--refresh 一键刷热榜，失败回退缓存）
 node scripts/topic-to-book.js match   --topic "重生爽文"                                  # 选题匹配题材库
-node scripts/topic-to-book.js scaffold --genre 修仙 --title "我的书" [--gender 男频] [--platform 起点]   # 开书骨架（设定/正文/追踪/大纲/记忆 + 追踪文件 + 大纲模板）
+node scripts/topic-to-book.js scaffold --genre 修仙 --title "我的书" [--gender 男频] [--platform 起点] [--decision 选题决策.md]   # 开书骨架（设定/正文/追踪/大纲/记忆 + 追踪文件 + 大纲模板；有 选题决策.md 则消费并拷入项目根）
 node scripts/topic-to-book.js plan    --dir <项目目录> [--words 3000]                     # 今日配速（章节数 + outline-pacer 结构配比）
 node scripts/topic-to-book.js review  --dir <项目目录>                                    # 追读复盘（字数/密度序列/水章预警/记忆条数 + 起点·番茄逐平台真实率复盘与建议）
 ```
 - 不重复造轮子：通过 child_process 复用 `genre-library` / `outline-pacer` / `tracking-updater` / `pacing-density` / `learn-bank`；review 直接 require `pacing-density` 拿曲线（**有效密度 eff = 多平台真实率均值**，未填则结构性归一分）。
 - review 的「平台复盘」段对 **起点 / 番茄** 分别汇总真实追读率（均值/最新/完读均值/低于阈值的章节），逐平台给出建议：某平台偏低即单独警告并提示下一章补钩子/爽点/回收伏笔；均未填则只给结构性代理结论。
 - scaffold 输出标准写作流水线提示（每章严格按 `SKILL.md`「写章标准流程」6 步：写章 → tracking-updater(+`reading-power`) → 去味/格式 → quality-gate(含 pacing) → drift-guard → learn-bank+backup）。
+- scaffold **可选消费** `选题决策.md`（long-scan Phase 4 产出）：`--decision <路径>` 显式指定，或放在运行目录自动发现；找到则解析排在最前（可行性最高）的推荐选题，预填书名/题材/大纲的「选题决策依据」段，并**拷入项目根**供下游 `long-write Phase1` / `long-analyze Stage5` 自动读取（单一数据源）。无决策文件时行为不变。
 
 ### 自测套件 `selftest.js`
 ```bash

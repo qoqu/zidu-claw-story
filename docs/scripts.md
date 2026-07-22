@@ -241,7 +241,7 @@ node scripts/promo-pack.js runbook  <项目目录> --platforms 微博,小红书,
 
 | 脚本 | 作用 |
 |---|---|
-| `topic-to-book.js` | 选题→成书闭环编排：scan（题材风向）/ match（选题匹配）/ scaffold（开书骨架）/ plan（每日配速）/ review（追读复盘），通过 child_process 复用 genre-library / outline-pacer / tracking-updater / pacing-density / learn-bank；review 复用 `pacing-density.computeSeries`，有效密度 eff = 多平台真实率均值，并输出 **起点/番茄逐平台复盘**（真实率均值/最新/完读均值/低于阈值章节 + 逐平台建议） |
+| `topic-to-book.js` | 选题→成书闭环编排：scan（题材风向）/ match（选题匹配）/ scaffold（开书骨架，可选 `--decision 选题决策.md` 消费扫榜决策并拷入项目根）/ plan（每日配速）/ review（追读复盘），通过 child_process 复用 genre-library / outline-pacer / tracking-updater / pacing-density / learn-bank；review 复用 `pacing-density.computeSeries`，有效密度 eff = 多平台真实率均值，并输出 **起点/番茄逐平台复盘**（真实率均值/最新/完读均值/低于阈值章节 + 逐平台建议） |
 | `selftest.js` | 自测套件：阶段1 语法检查 + 阶段2 启动冒烟 + 阶段3 功能冒烟（tracking-updater init → dashboard → learn-bank → genre-library → outline-pacer），回归护栏 |
 
 ```bash
@@ -249,7 +249,7 @@ node scripts/promo-pack.js runbook  <项目目录> --platforms 微博,小红书,
 node scripts/topic-to-book.js scan --kw 扮猪吃虎
 node scripts/topic-to-book.js scan --from-rank [--refresh] --rank-dir data/rank   # 蓝海指数选题榜（--refresh 一键刷热榜，失败回退缓存）
 node scripts/topic-to-book.js match --topic "重生爽文"
-node scripts/topic-to-book.js scaffold --genre 修仙 --title "我的书" [--gender 男频] [--platform 起点]
+node scripts/topic-to-book.js scaffold --genre 修仙 --title "我的书" [--gender 男频] [--platform 起点] [--decision 选题决策.md]
 node scripts/topic-to-book.js plan    --dir <项目目录> [--words 3000]
 node scripts/topic-to-book.js review  --dir <项目目录>
 
