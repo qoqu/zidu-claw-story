@@ -39,9 +39,9 @@ node scripts/quality-gate.js <章节.md> <项目目录> --genre dushi --threshol
 - 追踪目录：`追踪/`（伏笔/角色状态/时间线等）；**不存在时相关检查自动 skip，不报错**
 
 ## 检查项（scripts/quality-gate.js 调度链）
-style-lint（一级禁用词→阻断）· check-ai-patterns（AI 味句式→阻断，去味第一道）· consistency-check（物品/环境/角色/时间线）· foreshadow-check（伏笔逾期>50章）· wordcount（<目标90%阻断）· cross-chapter-check（跨章重复）· voice-check（角色声音）· emotion-analyzer（情绪曲线）· satisfaction-meter（爽点密度）· detect-story-gaps（--full）· pacing（追读密度回落→advisory ⚠️ 不阻断）· writing-scorer（百分制评分提示）
+style-lint（一级禁用词→阻断）· check-ai-patterns（AI 味句式→阻断，去味第一道）· consistency-check（物品/环境/角色/时间线）· foreshadow-check（伏笔逾期>50章）· wordcount（<目标90%阻断）· cross-chapter-check（跨章重复）· voice-check（角色声音）· emotion-analyzer（情绪曲线）· satisfaction-meter（爽点密度）· detect-story-gaps（--full）· pacing（追读密度回落→advisory ⚠️ 不阻断；填了 --real-rate 则由真实率接管信号，否则结构性归一分）· writing-scorer（百分制评分提示）
 
-> 注：`quality-gate.js` 已内部调度 `check-ai-patterns`，所以写章流程里**不要在其外再单独跑 `check-ai-patterns.js`**，避免双重执行（见 SKILL.md「写章标准流程」步骤 3/4）。pacing 维度依赖 `追踪/追读力.md`，需每章 `tracking-updater reading-power` 供数，否则不触发。
+> 注：`quality-gate.js` 已内部调度 `check-ai-patterns`，所以写章流程里**不要在其外再单独跑 `check-ai-patterns.js`**，避免双重执行（见 SKILL.md「写章标准流程」步骤 3/4）。pacing 维度依赖 `追踪/追读力.md`，需每章 `tracking-updater reading-power` 供数，否则不触发；`reading-power` 带 `--real-rate` 时，pacing 信号改由平台真实追读率接管（结构性归一分回退为参考）。
 
 ## 规则库（references/）
 - `quality-rules.md` — 质检规则总纲

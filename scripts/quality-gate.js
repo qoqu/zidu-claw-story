@@ -305,13 +305,16 @@ function main() {
     if (pdData && Array.isArray(pdData.chapters) && pdData.chapters.length) {
       const last = pdData.chapters[pdData.chapters.length - 1];
       const th = pdData.waterThreshold || 45;
+      // 有效密度 eff：填了真实追读率则用真实率接管，否则回退结构性归一分
+      const eff = (last.eff != null) ? last.eff : last.norm;
       results.pacing = {
         status: 'pass',
-        advisory: last.norm < th,
+        advisory: eff < th,
         latestChapter: last.chapter,
-        latestDensity: last.norm,
+        latestDensity: eff,
         threshold: th,
-        warning: last.norm < th,
+        warning: eff < th,
+        realRate: last.realRate != null ? last.realRate : null,
         waterChapters: pdData.waterChapters || [],
       };
     } else if (pdData && Array.isArray(pdData.chapters)) {
@@ -456,9 +459,9 @@ function main() {
     } else if (s.status === 'error') {
       console.log('⚠️ 追读回落：追读数据读取异常');
     } else if (s.warning) {
-      console.log(`⚠️ 追读回落：第${s.latestChapter}章密度 ${s.latestDensity} < 阈值 ${s.threshold}，疑似水章，建议补钩子/爽点`);
+      console.log(`⚠️ 追读回落：第${s.latestChapter}章 有效密度 ${s.latestDensity}${s.realRate != null ? `（真实率 ${s.realRate}%）` : ''} < 阈值 ${s.threshold}，疑似水章，建议补钩子/爽点`);
     } else {
-      console.log(`✅ 追读回落：第${s.latestChapter}章密度 ${s.latestDensity}（≥ 阈值 ${s.threshold}）`);
+      console.log(`✅ 追读回落：第${s.latestChapter}章 有效密度 ${s.latestDensity}${s.realRate != null ? `（真实率 ${s.realRate}%）` : ''}（≥ 阈值 ${s.threshold}）`);
     }
   }
 

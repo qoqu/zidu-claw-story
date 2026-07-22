@@ -4,7 +4,7 @@
 
 把**网文写作全流程**（长篇/短篇/拆文/扫榜/去味/封面/导入/初始化）与**量化质检**（quality-gate 硬门禁）+ **追踪流水线**（tracking-updater / pipeline-gate）整合为**一个技能包**，无外部依赖、无宿主私有契约。
 
-当前版本：**1.7.4**（见 `VERSION`）。
+当前版本：**1.7.5**（见 `VERSION`）。
 
 ## ✨ 特性
 
@@ -81,7 +81,9 @@ node scripts/quality-gate.js 正文/第N章.md ./ --genre dushi
 
 # 5. 追踪更新（含追读力）
 node scripts/tracking-updater.js ./ after-chapter --chapter N --summary "..."
-node scripts/tracking-updater.js ./ reading-power --chapter N --hook-type 危机钩 --hook-strength strong --coolpoint "..." [--micropayoff "..."] [--debt 0]
+node scripts/tracking-updater.js ./ reading-power --chapter N --hook-type 危机钩 --hook-strength strong --coolpoint "..." [--micropayoff "..."] [--debt 0] [--real-rate 12.3] [--real-finish 38.5]
+# --real-rate / --real-finish 为可选真实数据回填（方案①）：从平台作家后台手抄，
+# 填了则 pacing 信号由真实率接管（结构性归一分回退为参考）。不填则纯结构性代理。
 
 # 6. 流水线闸门标记完成 + 自动备份
 node scripts/pipeline-gate.js gate post qa ./ --chapter N

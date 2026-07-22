@@ -63,7 +63,10 @@ function parseReadingPower(projectDir) {
     const hardViolations = splitList(get('硬约束违规'));
     const debtRaw = get('债务余额');
     const debt = debtRaw === '' ? 0 : (parseFloat(debtRaw) || 0);
-    chapters.push({ chapter: num, hookType, hookStrength, coolpoints, micropayoffs, hardViolations, debt });
+    // 可选真实数据回填（方案①）：平台作家后台手抄；「—/-/空」视为未填
+    const realRate = (() => { const r = get('真实追读率'); return (r === '' || r === '—' || r === '-') ? null : (parseFloat(r) || null); })();
+    const realFinish = (() => { const r = get('真实完读率'); return (r === '' || r === '—' || r === '-') ? null : (parseFloat(r) || null); })();
+    chapters.push({ chapter: num, hookType, hookStrength, coolpoints, micropayoffs, hardViolations, debt, realRate, realFinish });
   }
   return chapters.length ? chapters.sort((a, b) => a.chapter - b.chapter) : null;
 }
@@ -81,23 +84,24 @@ function densityScore(ch) {
 
 function renderCurve(series, waterTh) {
   const barW = 22;
-  console.log(`\n${BOLD}追读密度曲线（0-100，阈值 ${waterTh} 以下标记为水章）${RESET}\n`);
+  console.log(`\n${BOLD}追读密度曲线（有效密度 0-100，阈值 ${waterTh} 以下标记为水章；有真实率时 eff=真实率，否则=结构性归一分）${RESET}\n`);
   for (const s of series) {
-    const filled = Math.round((s.norm / 100) * barW);
+    const filled = Math.round((s.eff / 100) * barW);
     const bar = '█'.repeat(filled) + '░'.repeat(barW - filled);
-    const isWater = s.norm < waterTh;
+    const isWater = s.eff < waterTh;
     const tag = isWater ? `${RED}水${RESET}` : '  ';
-    const line = `第${String(s.chapter).padStart(3, '0')}章 │${isWater ? RED : ''}${bar}${RESET} ${String(s.norm).padStart(3)} ${tag}`;
+    const real = s.realRate != null ? ` 真实${s.realRate}%` : '';
+    const line = `第${String(s.chapter).padStart(3, '0')}章 │${isWater ? RED : ''}${bar}${RESET} ${String(s.eff).padStart(3)}${real} ${tag}`;
     console.log(line);
   }
 }
 
 function renderTable(series) {
   console.log(`\n${BOLD}明细${RESET}\n`);
-  console.log('章\t强度\t爽点\t微兑现\t硬违规\t债务\t密度');
+  console.log('章\t强度\t爽点\t微兑现\t硬违规\t债务\t有效密度\t真实率');
   for (const s of series) {
     console.log(
-      `第${s.chapter}章\t${s.hookStrength || '-'}\t${s.coolpoints.length}\t${s.micropayoffs.length}\t${s.hardViolations.length}\t${s.debt}\t${s.norm}`
+      `第${s.chapter}章\t${s.hookStrength || '-'}\t${s.coolpoints.length}\t${s.micropayoffs.length}\t${s.hardViolations.length}\t${s.debt}\t${s.eff}\t${s.realRate != null ? s.realRate + '%' : '—'}`
     );
   }
 }
@@ -108,12 +112,16 @@ function buildHtml(series, waterTh, projectName) {
   const n = series.length;
   const xs = (i) => padL + (n <= 1 ? plotW / 2 : (i / (n - 1)) * plotW);
   const ys = (v) => padT + (1 - v / 100) * plotH;
-  let pts = '', dots = '', labels = '';
+  let pts = '', ptsReal = '', dots = '', labels = '';
+  const hasReal = series.some(s => s.realRate != null);
   series.forEach((s, i) => {
     const x = xs(i), y = ys(s.norm);
-    const col = s.norm < waterTh ? '#d23f3f' : '#2f7dd2';
+    const yDot = ys(s.eff);
+    const col = s.eff < waterTh ? '#d23f3f' : '#2f7dd2';
     pts += `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)} `;
-    dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${col}"><title>第${s.chapter}章 密度${s.norm}</title></circle>`;
+    if (s.realRate != null) ptsReal += `${ptsReal ? 'L' : 'M'}${x.toFixed(1)},${ys(s.realRate).toFixed(1)} `;
+    const tip = `第${s.chapter}章 有效${s.eff}${s.realRate != null ? ' 真实' + s.realRate + '%' : ''}`;
+    dots += `<circle cx="${x.toFixed(1)}" cy="${yDot.toFixed(1)}" r="4" fill="${col}"><title>${tip}</title></circle>`;
     labels += `<text x="${x.toFixed(1)}" y="${(H - padB + 16)}" font-size="10" text-anchor="middle" fill="#666">${s.chapter}</text>`;
   });
   // 阈值线
@@ -122,17 +130,23 @@ function buildHtml(series, waterTh, projectName) {
     const y = ys(v);
     return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#eee" stroke-width="1"/><text x="${padL - 6}" y="${y + 3}" font-size="9" text-anchor="end" fill="#999">${v}</text>`;
   }).join('');
+  const legend = hasReal
+    ? `<div class="sub"><span style="color:#2f7dd2">━ 结构性归一分</span>　<span style="color:#e08a00">━ 真实追读率（接管 pacing 信号）</span></div>`
+    : `<div class="sub">结构性代理（未填真实率）</div>`;
+  const realPath = hasReal ? `<path d="${ptsReal}" fill="none" stroke="#e08a00" stroke-width="2" stroke-dasharray="4 3"/>` : '';
   return `<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>追读密度曲线 - ${projectName}</title>
 <style>body{font-family:system-ui,"Microsoft YaHei",sans-serif;background:#fff;color:#222;margin:24px} h2{margin:0 0 4px} .sub{color:#888;font-size:13px;margin-bottom:12px} .water{color:#d23f3f;font-weight:600}</style></head>
-<body><h2>追读密度曲线 · ${projectName}</h2><div class="sub">数据源：追踪/追读力.md　|　阈值 ${waterTh} 以下为水章（红）</div>
+<body><h2>追读密度曲线 · ${projectName}</h2><div class="sub">数据源：追踪/追读力.md　|　阈值 ${waterTh} 以下为水章（红）${hasReal ? '　· 真实率已接管' : ''}</div>
+${legend}
 <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
 <line x1="${padL}" y1="${ty}" x2="${W - padR}" y2="${ty}" stroke="#d23f3f" stroke-width="1" stroke-dasharray="5 4"/>
 <text x="${W - padR}" y="${ty - 5}" font-size="9" text-anchor="end" fill="#d23f3f">水章阈值 ${waterTh}</text>
 ${grid}
 <path d="${pts}" fill="none" stroke="#2f7dd2" stroke-width="2"/>
+${realPath}
 ${dots}${labels}
 </svg>
-${(() => { const w = series.filter(s => s.norm < waterTh); return w.length ? `<p class="water">⚠ 疑似水章：${w.map(s => '第' + s.chapter + '章(' + s.norm + ')').join('、')}</p>` : '<p style="color:#2f9e44">✓ 本书节奏分布健康，无水章预警。</p>'; })()}
+${(() => { const w = series.filter(s => s.eff < waterTh); return w.length ? `<p class="water">⚠ 疑似水章：${w.map(s => '第' + s.chapter + '章(' + s.eff + (s.realRate != null ? ' 真实' + s.realRate + '%' : '') + ')').join('、')}</p>` : '<p style="color:#2f9e44">✓ 本书节奏分布健康，无水章预警。</p>'; })()}
 </body></html>`;
 }
 
@@ -156,13 +170,14 @@ function main() {
 
   const rawScores = chapters.map(densityScore);
   const maxRaw = Math.max(...rawScores, 0.0001);
-  const series = chapters.map((ch, i) => ({
-    ...ch,
-    raw: rawScores[i],
-    norm: Math.round((rawScores[i] / maxRaw) * 100),
-  }));
+  const series = chapters.map((ch, i) => {
+    const norm = Math.round((rawScores[i] / maxRaw) * 100);
+    // 有效密度 eff：填了真实追读率则用真实率（已是 0-100），否则回退结构性归一分
+    const eff = (ch.realRate != null) ? ch.realRate : norm;
+    return { ...ch, raw: rawScores[i], norm, eff };
+  });
 
-  const waterChapters = series.filter(s => s.norm < waterTh);
+  const waterChapters = series.filter(s => s.eff < waterTh);
 
   if (jsonMode) {
     console.log(JSON.stringify({ project: path.basename(projectDir), waterThreshold: waterTh, chapters: series, waterChapters: waterChapters.map(s => s.chapter) }, null, 2));
@@ -174,7 +189,7 @@ function main() {
   renderTable(series);
 
   if (waterChapters.length === 0) console.log(`\n${GREEN}✓ 无水章预警，节奏分布健康。${RESET}`);
-  else warn(`疑似水章（密度<${waterTh}）：${waterChapters.map(s => '第' + s.chapter + '章(' + s.norm + ')').join('、')}　→ 建议补钩子/爽点/微兑现。`);
+  else warn(`疑似水章（有效密度<${waterTh}）：${waterChapters.map(s => '第' + s.chapter + '章(' + s.eff + (s.realRate != null ? ' 真实' + s.realRate + '%' : '') + ')').join('、')}　→ 建议补钩子/爽点/微兑现。`);
 
   if (htmlOut) {
     const html = buildHtml(series, waterTh, path.basename(projectDir));
