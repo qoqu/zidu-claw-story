@@ -75,14 +75,14 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 
 ## 二、量化质检（quality-gate）
 
-`scripts/quality-gate.js` 是统一质量门禁，9–10 项检查全绿才放行：
+`scripts/quality-gate.js` 是统一质量门禁，约 12 项（11 个脚本子检查 + 内联字数检查）全绿才放行：
 
 ```bash
 node scripts/quality-gate.js <章节.md> <项目目录> [--json] [--genre dushi] [--threshold 90]
 ```
 
 - 退出码：**0 = 通过** / **2 = 硬阻断**（一级禁用词、一致性错误、 overdue 伏笔、字数不足、跨章重复、人设崩、情绪曲线平坦、爽点密度不足等）/ **3 = 评分不足建议提质**
-- 子检查：style-lint / consistency / foreshadow / wordcount / cross-chapter / voice / emotion / satisfaction / gaps / scorer（均位于 `scripts/`，`quality-gate` 用 `__dirname` 自动定位）
+- 子检查：style-lint / check-ai-patterns（去味第一道）/ consistency / foreshadow / wordcount（内联）/ cross-chapter / voice / emotion / satisfaction / gaps（detect-story-gaps）/ **pacing（复用 pacing-density 的追读回落预警）** / scorer（均位于 `scripts/`，`quality-gate` 用 `__dirname` 自动定位）
 - 详细规则库：`references/`（quality-rules / quality-checklist / banned-words / anti-ai-writing / quality-monitoring）
 - 完整 SOP：见 `references/quality.md`
 

@@ -147,12 +147,13 @@
 4. **钩子检查**：每章章尾是否有往下看的理由（低压/过场章弱钩子或阶段目标即可，不强求强钩子，按细纲章节定位；见 references/outline-structure-theory.md「章节定位与张弛」）；如新版细纲有「结尾设定和钩子」，检查正文是否兑现收束状态、未解决问题和下一章推动力
 5. **对照细纲核对**（正文有没有按细纲写到）：新版细纲存在时，核对正文是否消费了内容概括五段式、情节安排多线、人物关系变化/出场顺序、代价兑现/收益兑现；并加三条 craft 兑现核对（不达标→修复）：① 爽点出手前是否有可指认的危机/期待铺垫段落？指不出=空洞 → 回 Step 2 补铺垫情节点（plot-emotion-system 倒推法）；② 装逼/打脸/揭露章是否写出在场配角差异化反应（集体震惊/各异），还是只写主角动作？没有 → 补在场配角反应（plot-core-methods）；③ 详略是否按目的词（爽点/卖点点展开、过渡点带过、信息密度交替），还是均匀注水？均匀 → 删过渡、扩爽点点。旧版细纲只核对核心事件、目标情绪、章首/章尾钩子和字数目标
 6. **伏笔盘点（仅本轮增量）**：只确认本批新增/推进/回收的伏笔已写入 `追踪/伏笔.md` 并更新状态；不得在日更流程中通读所有 session 或扫描全部正文做全量伏笔审计。全量伏笔审计只在 `/story-review` 或用户明确要求"全面检查伏笔"时执行
-7. **质量门禁（唯一硬门禁）**：主会话对每章运行 `node scripts/quality-gate.js 正文/第XXX章_*.md <项目目录> --genre <题材> --json`。exit 2/3（阻断 / 评分不足）先回正文改写并复跑；含 `pacing` 维度，最新章追读密度过低会 ⚠️ 预警。quality-gate 内部已含 `check-ai-patterns`（去 AI 味）与 `style-lint`，**无需在其外单独跑 `check-ai-patterns.js`**（避免双重执行）。
-8. **格式与退化防护（门禁之后）**：运行 `node scripts/punct-precheck.js 正文/第XXX章_*.md`（默认 `--quote-mode keep`）清理无功能省略号、破折号、双连字符和独立分隔线。narrative-writer agent 不运行这些脚本。
-   - **退化防护**：再跑 `node scripts/check-degeneration.js --check 正文/第XXX章_*.md`。blocking 只重写受影响章节，最多 2 次；仍失败就报告证据让用户定夺。advisory 先看例外，确属工程词泄漏或退化再改。
+7. **格式与退化防护（门禁之前先净化）**：运行 `node scripts/punct-precheck.js 正文/第XXX章_*.md`（默认 `--quote-mode keep`）清理无功能省略号、破折号、双连字符和独立分隔线。narrative-writer agent 不运行这些脚本。
+   - **退化防护**：再跑 `node scripts/check-degeneration.js --check 正文/第XXX章_*.md`。blocking 只重写受影响章节，最多 2 次；仍失败就报告证据让用户定夺。advisory 先看例外，确属工程词泄漏或退化再改。净化后再跑门禁，确保判定基于干净文本。
+8. **质量门禁（唯一硬门禁）**：格式净化后立即对每章运行 `node scripts/quality-gate.js 正文/第XXX章_*.md <项目目录> --genre <题材> --json`。exit 2/3（阻断 / 评分不足）先回正文改写并复跑（退化防护已前置，门禁为终检）；含 `pacing` 维度，最新章追读密度过低会 ⚠️ 预警。quality-gate 内部已含 `check-ai-patterns`（去 AI 味）与 `style-lint`，**无需在其外单独跑 `check-ai-patterns.js`**（避免双重执行）。
 9. **风格护栏（advisory，不阻断）**：如需防文风漂移，运行 `node scripts/drift-guard.js 正文/第XXX章_*.md --project <项目目录>`，仅提示、不阻断。
+10. **记忆沉淀与自动备份（写章收尾第 6 步）**：① 沉淀好写法 `node scripts/learn-bank.js <项目目录> add --type 爽点套路 --content "..." [--chapter N]`（新章任务书 `query` 召回，越写越香）；② 自动备份 `node scripts/pipeline-gate.js backup <项目目录> --chapter N`（轮转快照，保留最近 10 份，误删可恢复）。
 
-> 完整 Phase 5 检查清单见 SKILL.md Phase 5。
+> 完整 Phase 5 检查清单见 SKILL.md Phase 5（顺序：净化 → 门禁 → 护栏 → 记忆沉淀+备份）。
 
 ---
 

@@ -10,20 +10,22 @@
 
 ## A. 量化质检族
 
-`quality-gate.js` 是统一门禁，调用下列子检查。
+`quality-gate.js` 是统一门禁，实际调度 **11 个脚本子检查 + 内联字数检查（共约 12 项）**，全绿才放行。各子检查如下：
 
 | 脚本 | 作用 |
 |---|---|
 | `quality-gate.js` | 统一质量门禁入口（双道去味：style-lint + check-ai-patterns；含追读回落 pacing 维度 advisory；其余检查全绿才放行） |
-| `style-lint.js` | 文风检查（措辞/病句） |
-| `consitency-check.js` | 一致性检查（人名/设定前后矛盾） |
+| `style-lint.js` | 文风检查（措辞/病句/一级禁用词） |
+| `check-ai-patterns.js` | AI 句式检测（套词/陈词/抽象总结/微动作等），去味第一道，由 quality-gate 内部调用 |
+| `consistency-check.js` | 一致性检查（人名/设定前后矛盾） |
 | `foreshadow-check.js` | 伏笔检查（overdue 未回收伏笔） |
-| `chapter-wordcount.js` | 字数检查（达标/节奏） |
+| `chapter-wordcount.js` | 字数检查（达标/节奏，quality-gate 内联实现） |
 | `cross-chapter-check.js` | 跨章重复检查 |
 | `voice-check.js` | 人设/声音一致性 |
 | `emotion-analyzer.js` | 情绪曲线分析 |
 | `satisfaction-meter.js` | 爽点密度测量 |
-| `detect-story-gaps.js` | 剧情缺口检测 |
+| `detect-story-gaps.js` | 剧情缺口检测（--full 深入） |
+| `pacing-density.js` | 追读密度曲线（pacing 维度复用，质量门禁的追读回落预警数据源） |
 | `writing-scorer.js` | 综合评分（0-100） |
 
 ```bash

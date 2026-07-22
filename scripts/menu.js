@@ -92,7 +92,7 @@ const DOMAINS = [
     key: 'flow',
     title: '流  —— 选题→成书闭环 / 自测（T4 新增）',
     items: [
-      { name: '选题→成书闭环', entry: 'scripts/topic-to-book.js', note: 'scan(含选题情报蓝海指数)/match/scaffold/plan/review 串起扫榜→开书→追读复盘' },
+      { name: '选题→成书闭环', entry: 'scripts/topic-to-book.js', note: 'scan(含选题情报蓝海指数，--refresh 一键刷实时热榜)/match/scaffold/plan/review 串起扫榜→开书→追读复盘' },
       { name: '自测套件', entry: 'scripts/selftest.js', note: '44 脚本语法/启动/功能三层冒烟，改一处不崩一片' },
     ],
   },
