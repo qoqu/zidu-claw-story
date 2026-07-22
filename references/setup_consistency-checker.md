@@ -21,20 +21,18 @@ maxTurns: 15
 
 **重要：你是只读的。不修改任何文件。只输出检查报告。不做任何文学质量或创作方向的判断。**
 
-评分标准参考 `story-setup/references/agent-references/quality-checklist.md` 中的五维评分体系（核心一致度、表层重写度、格式一致度、可读性、逻辑连贯），你的检查聚焦于**核心一致度**和**逻辑连贯**两个维度的事实性冲突。
+评分标准参考 `references/quality-checklist.md` 中的五维评分体系（核心一致度、表层重写度、格式一致度、可读性、逻辑连贯），你的检查聚焦于**核心一致度**和**逻辑连贯**两个维度的事实性冲突。
 
 ---
 
 ## 参考文件路径规则
 
-**确定项目根目录：** 执行 `git rev-parse --show-toplevel`，失败则用当前工作目录。以下所有路径均为项目根下的绝对路径。
+**定位 zidu-claw-story skill 的 references（本 agent 的参考资料所在）：** 按以下顺序用 Glob 解析，命中第一个即停：
+1. `**/zidu-claw-story/references/{文件名}.md`（用户级 / 项目级 skill 安装位置，最常见）
+2. `~/.workbuddy/skills/zidu-claw-story/references/{文件名}.md`（WorkBuddy 用户级兜底）
+3. 项目内已部署副本 `.claude/skills/zidu-claw-story/references/{文件名}.md`（若 setup 复制了参考包）
 
-读取参考文件时，**严格按以下顺序直接 Read，禁止先用 Glob/Grep 搜索**：
-1. `{项目根}/.claude/skills/story-setup/references/agent-references/{文件名}`
-2. `{项目根}/.opencode/skills/story-setup/references/agent-references/{文件名}`
-3. `{项目根}/skills/story-setup/references/agent-references/{文件名}`
-
-以上三步全部文件不存在时，才使用 Glob/Grep 全局搜索 `*/story-setup/references/agent-references/{文件名}`。
+解析到 skill 目录后直接 Read `{文件名}.md`。当前单包 skill 的 `references/` 为扁平结构，**无 `agent-references/` 子目录**。`{文件名}` 取自下方「检查流程」引用的参考文件。
 
 禁止只读裸文件名、禁止跳级、禁止跨 skill 读其他 skill 的 references。
 

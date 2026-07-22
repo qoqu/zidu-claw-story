@@ -11,7 +11,7 @@
  *
  * 与下列既有能力互补（不重复）：
  *   - consistency-check.js      单章 vs 追踪文件 的设定冲突
- *   - consistency-checker.md   LLM 推理子代理，S1–S4 分级、规则边界/因果链/代价一致性
+ *   - setup_consistency-checker.md   LLM 推理子代理，S1–S4 分级、规则边界/因果链/代价一致性
  * 本脚本提供【无需 LLM】的全书事实矛盾快筛，结果作为候选交人工 / LLM 子代理裁决。
  *
  * 退出码：0=通过（无矛盾候选）；2=发现矛盾候选。
@@ -138,7 +138,7 @@ function main() {
   for (const c of conflicts) {
     warn(`[${c.sev}] ${c.entity} · ${c.attr} — ${c.desc}（章节：${c.chapters.join(', ')}）`);
   }
-  console.log(`\n提示：以上为确定性快筛候选，建议交 references/consistency-checker.md（LLM 子代理）裁决 S1–S4。`);
+  console.log(`\n提示：以上为确定性快筛候选，建议交 references/setup_consistency-checker.md（LLM 子代理）裁决 S1–S4。`);
 
   if (jsonMode) console.log('\n' + JSON.stringify({ status: 'fail', chapters: chapters.length, facts: allFacts.length, conflicts }, null, 2));
   process.exit(2);

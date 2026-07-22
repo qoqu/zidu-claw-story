@@ -31,7 +31,7 @@
 ### 3. 量化质检规范
 - `quality.md`（质检 SOP 主文档）
 - `quality-rules.md`、`quality-checklist.md`、`quality-monitoring.md`
-- `consistency-checker.md`
+- `setup_consistency-checker.md`
 
 ### 4. 追踪 / 流水线规范
 - `tracking-spec.md`（8 类追踪规范）
@@ -46,7 +46,7 @@
 - **`genres/`（37 个原创题材模板，开书可直接调用）**：`修仙.md` `都市异能.md` `科幻.md` `末世.md` `无限流.md` `宫斗宅斗.md` `规则怪谈.md` `西幻.md` 等。完整清单见目录列表，或 `node scripts/menu.js --json` 的 `write` 域「题材库(37)」项。
 
 ### 6. 角色设计
-- `character-basics.md`、`character-designer.md`、`character-design-methods.md`
+- `character-basics.md`、`setup_character-designer.md`、`character-design-methods.md`
 - `character-relations.md`（人物关系）、`character-state-reverse.md`（状态反推）
 
 ### 7. 钩子 / 悬念
@@ -57,7 +57,7 @@
 
 ### 9. 结构 / 拆解
 - `deconstruction-examples.md`、`deconstruction-notes.md`（拆解范例与笔记）
-- `chapter-extractor.md`（章节抽取）
+- `setup_chapter-extractor.md`（章节抽取）
 
 ### 10. 浏览器 / CDP
 - `browser-cdp.md`（CDP 浏览器操控主文档）、`artifact-protocols.md`（产物协议）

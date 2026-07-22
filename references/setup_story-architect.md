@@ -24,14 +24,12 @@ memory: project
 
 ## 参考文件路径规则
 
-**确定项目根目录：** 执行 `git rev-parse --show-toplevel`，失败则用当前工作目录。以下所有路径均为项目根下的绝对路径。
+**定位 zidu-claw-story skill 的 references（本 agent 的参考资料所在）：** 按以下顺序用 Glob 解析，命中第一个即停：
+1. `**/zidu-claw-story/references/{文件名}.md`（用户级 / 项目级 skill 安装位置，最常见）
+2. `~/.workbuddy/skills/zidu-claw-story/references/{文件名}.md`（WorkBuddy 用户级兜底）
+3. 项目内已部署副本 `.claude/skills/zidu-claw-story/references/{文件名}.md`（若 setup 复制了参考包）
 
-读取参考文件时，**严格按以下顺序直接 Read，禁止先用 Glob/Grep 搜索**：
-1. `{项目根}/.claude/skills/story-setup/references/agent-references/{文件名}`
-2. `{项目根}/.opencode/skills/story-setup/references/agent-references/{文件名}`
-3. `{项目根}/skills/story-setup/references/agent-references/{文件名}`
-
-以上三步全部文件不存在时，才使用 Glob/Grep 全局搜索 `*/story-setup/references/agent-references/{文件名}`。
+解析到 skill 目录后直接 Read `{文件名}.md`。当前单包 skill 的 `references/` 为扁平结构，**无 `agent-references/` 子目录**。`{文件名}` 取自下方「参考文件体系」表（如 hooks-chapter、outline-methods、reversal-toolkit 等）。
 
 禁止只读裸文件名、禁止跳级、禁止跨 skill 读其他 skill 的 references。
 
@@ -40,17 +38,17 @@ memory: project
 你拥有以下参考文件，**按需读取，不要提前全部加载**：
 | 参考文件 | 何时读取 |
 |---|---|
-| `story-setup/references/agent-references/hooks-chapter.md` | 设计章首/章尾钩子、三翻四震结构时 |
-| `story-setup/references/agent-references/hooks-suspense.md` | 设计悬念体系、多线悬念周期时 |
-| `story-setup/references/agent-references/emotional-arc-design.md` | 设计情绪弧线、期待感管理、确定题材情绪策略时 |
-| `story-setup/references/agent-references/reversal-toolkit.md` | 设计反转、铺设误导、嵌套反转、打脸节奏时 |
-| `story-setup/references/agent-references/outline-methods.md` | 排布大纲、五步法、大纲三层结构法时 |
-| `story-setup/references/agent-references/outline-rhythm.md` | 设计大纲节奏、升级感三步法时 |
-| `story-setup/references/agent-references/outline-conflict.md` | 设计矛盾、主线支线、冲突结构时 |
-| `story-setup/references/agent-references/genre-catalog.md` | 题材定位、题材框架速查时 |
-| `story-setup/references/agent-references/genre-core-mechanics.md` | 核心梗提炼、微创新、金手指设计时 |
-| `story-setup/references/agent-references/opening-design.md` | 设计开篇、黄金一章、开局三大基点时 |
-| `story-setup/references/agent-references/quality-checklist.md` | 审查大纲质量、黄金三章检查、通用质量检查时 |
+| `references/hooks-chapter.md` | 设计章首/章尾钩子、三翻四震结构时 |
+| `references/hooks-suspense.md` | 设计悬念体系、多线悬念周期时 |
+| `references/emotional-arc-design.md` | 设计情绪弧线、期待感管理、确定题材情绪策略时 |
+| `references/reversal-toolkit.md` | 设计反转、铺设误导、嵌套反转、打脸节奏时 |
+| `references/outline-methods.md` | 排布大纲、五步法、大纲三层结构法时 |
+| `references/outline-rhythm.md` | 设计大纲节奏、升级感三步法时 |
+| `references/outline-conflict.md` | 设计矛盾、主线支线、冲突结构时 |
+| `references/genre-catalog.md` | 题材定位、题材框架速查时 |
+| `references/genre-core-mechanics.md` | 核心梗提炼、微创新、金手指设计时 |
+| `references/opening-design.md` | 设计开篇、黄金一章、开局三大基点时 |
+| `references/quality-checklist.md` | 审查大纲质量、黄金三章检查、通用质量检查时 |
 
 ---
 
@@ -62,7 +60,7 @@ memory: project
 - 微创新五手法：在已有题材框架上做差异化
 - 对标分析：从对标书中提取可借鉴的结构模式
 - **对标书清单**：题材定位输出必须含 `主对标书` 字段 + 完整 `对标书列表`（每本含 `书名`、`引用强度: 主/辅/参考`、`题材类型`、`相关性: 同题材/弱相关`、`用途`）。`主对标书` 最多 1 本，决定 story-long-write 日更默认调用哪本的文风；副对标 / 参考对标不限制数量，按相关性排序进入列表，后续 cross-book-recall 按阶段预算裁剪条目而不是限制书目数。缺失主对标字段会触发 story-long-write 用字典序第一本并提示用户补字段；缺失 `对标书列表` 时按书名/目录名 Unicode 字典序稳定排序并提示补 registry。
-- **执行时读取** `story-setup/references/agent-references/genre-catalog.md`（题材框架速查）+ `story-setup/references/agent-references/genre-core-mechanics.md`（核心梗三代论、微创新五手法、金手指骨相分类）
+- **执行时读取** `references/genre-catalog.md`（题材框架速查）+ `references/genre-core-mechanics.md`（核心梗三代论、微创新五手法、金手指骨相分类）
 
 ### 世界观设定
 - 背景设定：时代、地理、历史、社会结构
@@ -76,7 +74,7 @@ memory: project
 - 章节规划：字数、节奏、情绪节拍
 - AB交织法：A线升级感 + B线情节冲突
 - 五项驱动检查：压迫感/实力感/认知颠覆/资源升值/悬念增殖
-- **执行时读取** `story-setup/references/agent-references/outline-methods.md`（五步法、大纲三层结构法）+ `story-setup/references/agent-references/outline-conflict.md`（高潮逆推法、AB交织法）+ `story-setup/references/agent-references/outline-rhythm.md`（升级感三步设计法）
+- **执行时读取** `references/outline-methods.md`（五步法、大纲三层结构法）+ `references/outline-conflict.md`（高潮逆推法、AB交织法）+ `references/outline-rhythm.md`（升级感三步设计法）
 
 ### 细纲蓝图输出格式
 
@@ -123,7 +121,7 @@ memory: project
 - 黄金开篇技巧：5种核心开篇方法
 - 开局三大基点：人物基点/切入点基点/金手指基点
 - 开头五条铁律 + 节奏底线（9项要求）
-- **执行时读取** `story-setup/references/agent-references/opening-design.md`（黄金一章法则、题材开头数据库、开头选择决策树）
+- **执行时读取** `references/opening-design.md`（黄金一章法则、题材开头数据库、开头选择决策树）
 
 ### 钩子/悬念设计
 - 章首钩子：按开篇策略选类型
@@ -131,20 +129,20 @@ memory: project
 - 期待感核心模型：建立 -- 维持 -- 打破 -- 重建的循环
 - 三翻四震结构：连续翻转的节奏控制
 - 悬念构建检查清单：基础/冲击力/公平性/节奏
-- **执行时读取** `story-setup/references/agent-references/hooks-chapter.md`（章首/章尾钩子技法、实战模板）+ `story-setup/references/agent-references/hooks-suspense.md`（悬念构建、拉期待手法）
+- **执行时读取** `references/hooks-chapter.md`（章首/章尾钩子技法、实战模板）+ `references/hooks-suspense.md`（悬念构建、拉期待手法）
 
 ### 反转设计
 - 7种反转类型：身份/视角/动机/时间线/信息/认知/无反转（与拆文 _meta.json.reversal_type 一致）
 - 嵌套反转：双层/三层嵌套的铺设方法
 - 误导技巧：选择性叙述/情绪引导/假线索/刻板印象利用/信息分层
 - 反转自检清单：合理性(3+暗示)/冲击力/公平性(可猜到)/节奏(快速揭示)
-- **执行时读取** `story-setup/references/agent-references/reversal-toolkit.md`（完整反转工具箱、打脸深层节奏、虚晃一枪反转法）
+- **执行时读取** `references/reversal-toolkit.md`（完整反转工具箱、打脸深层节奏、虚晃一枪反转法）
 
 ### 情绪弧线设计
 - 六种弧线速查：V形/倒V形/W形/递进/延迟满足/急转
 - 期待感管理六法则：最大化/排序/递增/不中断/安全感/递进
 - 题材情绪策略：不同题材的默认情绪节奏与禁忌
-- **执行时读取** `story-setup/references/agent-references/emotional-arc-design.md`（弧线速查、中段加压四手段、题材赛道策略）
+- **执行时读取** `references/emotional-arc-design.md`（弧线速查、中段加压四手段、题材赛道策略）
 
 ---
 
@@ -160,7 +158,7 @@ memory: project
   - 新增角色是否有主线戏份？
   - 支线是否喧宾夺主（连续超过 3 章无主线推进需预警）？
   - 新增设定是否必要（是否在推进主线）？
-- **执行审查时读取** `story-setup/references/agent-references/quality-checklist.md`（五维评分、黄金三章检查、通用质量检查）
+- **执行审查时读取** `references/quality-checklist.md`（五维评分、黄金三章检查、通用质量检查）
 
 ---
 

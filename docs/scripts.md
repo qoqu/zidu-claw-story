@@ -151,7 +151,7 @@ node scripts/outline-pacer.js <项目目录> --target 4000
 | 脚本 | 作用 |
 |---|---|
 | `doctor.js` | 项目体检：结构 / 追踪文件 / 流水线状态 / 备份新鲜度 / （默认）最新章一致性 + 角色同步，一键健康报告 |
-| `continuity-ledger.js` | 跨章事实账本：确定性快筛全书「实体→属性→值」矛盾（左撇子变右撇子、死了又活等），无需 LLM，与 `consistency-checker.md` 子代理互补 |
+| `continuity-ledger.js` | 跨章事实账本：确定性快筛全书「实体→属性→值」矛盾（左撇子变右撇子、死了又活等），无需 LLM，与 `setup_consistency-checker.md` 子代理互补 |
 | `learn-bank.js` | 长期记忆沉淀库：LLM 抽取好写法后结构化存储，`query` 召回注入新章任务书 |
 
 ```bash
@@ -173,7 +173,7 @@ node scripts/learn-bank.js <项目目录> stats
 
 ## H. 节奏 / 漂移 / 仪表盘（T2 数据层）
 
-复用 T1 的 `追踪/追读力.md` 时间序列与正文语料，做"看数据"层。三者均为确定性、零依赖，与 LLM 类的 `consistency-checker.md` 互补。
+复用 T1 的 `追踪/追读力.md` 时间序列与正文语料，做"看数据"层。三者均为确定性、零依赖，与 LLM 类的 `setup_consistency-checker.md` 互补。
 
 | 脚本 | 作用 |
 |---|---|
@@ -202,7 +202,7 @@ node scripts/drift-guard.js <章节文件> [--project <项目目录>] [--z 1.5]
 
 ## I. 题材库 / 设定卡 / 发布物料（T3 增强）
 
-均为确定性、零依赖，与 LLM 类 `consistency-checker.md`、爬虫族互补。
+均为确定性、零依赖，与 LLM 类 `setup_consistency-checker.md`、爬虫族互补。
 
 | 脚本 | 作用 |
 |---|---|
