@@ -279,6 +279,23 @@ function cmdPlan(argv) {
   return 0;
 }
 
+// 逐平台复盘统计：对 起点/番茄/通用 分别汇总真实率（均值/最新/低于阈值的章节）
+function perPlatformRecap(series, waterTh) {
+  const out = [];
+  for (const p of ['起点', '番茄', '通用']) {
+    const filled = series.filter(s => s.realRates && s.realRates[p] && s.realRates[p].rate != null);
+    if (!filled.length) continue;
+    const vals = filled.map(s => s.realRates[p].rate);
+    const avg = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+    const latestReal = vals[vals.length - 1];
+    const lowChs = filled.filter(s => s.realRates[p].rate < waterTh).map(s => s.chapter);
+    const finishVals = filled.map(s => s.realRates[p].finish).filter(v => v != null);
+    const avgFinish = finishVals.length ? Math.round(finishVals.reduce((a, b) => a + b, 0) / finishVals.length) : null;
+    out.push({ platform: p, n: filled.length, avg, latestReal, lowChs, avgFinish, healthy: avg >= waterTh && lowChs.length === 0 });
+  }
+  return out;
+}
+
 // ===== review：追读复盘 =====
 function cmdReview(argv) {
   const dir = path.resolve(getOpt(argv, '--dir', '.'));
@@ -299,35 +316,60 @@ function cmdReview(argv) {
     }
   }
 
-  // 追读密度（require pacing-density）
+  // 追读密度（复用 pacing-density.computeSeries：eff=多平台真实率均值，未填则结构性归一分）
+  const waterTh = 45;
   let latest = null, series = [], waterChapters = [];
   try {
     const pd = require('./pacing-density.js');
-    const chs = pd.parseReadingPower(dir);
-    if (chs && chs.length) {
-      const raws = chs.map(pd.densityScore);
-      const maxRaw = Math.max(...raws, 0.0001);
-      series = raws.map((r) => Math.round((r / maxRaw) * 100));
-      latest = series[series.length - 1];
-      chs.forEach((c, i) => { if (series[i] < 45) waterChapters.push(c.num || i + 1); });
+    const comp = pd.computeSeries(dir, waterTh);
+    if (comp) {
+      series = comp.series;
+      waterChapters = comp.waterChapters;
+      latest = series.length ? series[series.length - 1].eff : null;
     }
   } catch (e) { warn('追读力解析失败（需先写 追踪/追读力.md）：' + e.message); }
 
   // 记忆沉淀
   const bank = run('learn-bank.js', [dir, 'stats'], { silent: true });
 
+  const hasReal = series.some(s => s.realRates && Object.values(s.realRates).some(r => r.rate != null));
+
   console.log('');
   console.log(`${BOLD}📈 进度${RESET}　章节 ${chapters}（最新第${last}章）　总字数 ${totalWords.toLocaleString()}`);
   console.log(`${BOLD}📊 追读密度${RESET}　最新 ${latest == null ? '无数据' : latest + ' / 100'}` +
-    (waterChapters.length ? `　${YELLOW}水章预警：第${waterChapters.join('、')}章${RESET}` : '　曲线健康'));
-  if (series.length) console.log(`${DIM}密度序列：${series.join(' ')}${RESET}`);
+    (waterChapters.length ? `　${YELLOW}水章预警：第${waterChapters.map(s => s.chapter).join('、')}章${RESET}` : '　曲线健康') +
+    (hasReal ? `　(${DIM}有效密度=多平台真实率均值${RESET})` : `　(${DIM}结构性代理${RESET})`));
+  if (series.length) console.log(`${DIM}密度序列：${series.map(s => s.eff).join(' ')}${RESET}`);
   if (bank.out) console.log(bank.out.trim());
 
+  // 平台逐平台复盘（起点/番茄分开给建议）
+  if (hasReal) {
+    console.log('');
+    console.log(`${BOLD}📌 平台复盘${RESET}（真实率手抄，起点/番茄分别回填章节计入）`);
+    const platLines = perPlatformRecap(series, waterTh);
+    for (const pl of platLines) {
+      const status = pl.healthy ? `${GREEN}✓ 健康${RESET}` : `${RED}⚠ 偏低${RESET}`;
+      const low = pl.lowChs.length ? `　第${pl.lowChs.join('、')}章低于阈值` : '';
+      const fin = pl.avgFinish != null ? ` · 完读均值 ${pl.avgFinish}%` : '';
+      console.log(`  ${pl.platform}：回填 ${pl.n} 章，真实追读率均值 ${pl.avg}%（最新 ${pl.latestReal}%${fin}）　${status}${low}`);
+    }
+    const weak = platLines.filter(p => !p.healthy);
+    if (weak.length) {
+      console.log('');
+      for (const p of weak) {
+        warn(`${p.platform}真实追读率偏低（均值 ${p.avg}%），建议下一章加强钩子/爽点、回收长线伏笔拉回期待。`);
+      }
+    } else {
+      console.log('');
+      log('各平台真实追读率均达标，节奏稳定。');
+    }
+  }
+
   console.log('');
-  if (latest != null && latest < 45) warn('最新章追读密度偏低，建议下一章加强钩子/爽点，或回收一个长线伏笔拉回期待。');
+  if (latest != null && latest < waterTh && !hasReal) warn('最新章追读密度偏低（结构性代理），建议下一章加强钩子/爽点，或回收一个长线伏笔拉回期待。');
   else if (latest == null) info('尚无追读数据，先按流水线写入 追踪/追读力.md。');
-  else log('节奏稳定，保持更新频率即可。');
-  info('全局视图：node dashboard.js <父目录> --html dashboard.html');
+  else if (!hasReal) log('节奏稳定，保持更新频率即可（当前为结构性代理，可在平台后台手抄真实率让数据更准）。');
+  else info('全局视图：node dashboard.js <父目录> --html dashboard.html');
   return 0;
 }
 

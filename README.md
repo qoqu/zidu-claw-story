@@ -1,10 +1,10 @@
-# zidu-claw-story
+﻿# zidu-claw-story
 
 > AI 网文写作完整工具箱（单包 · WorkBuddy 原生 · 跨宿主可移植）
 
 把**网文写作全流程**（长篇/短篇/拆文/扫榜/去味/封面/导入/初始化）与**量化质检**（quality-gate 硬门禁）+ **追踪流水线**（tracking-updater / pipeline-gate）整合为**一个技能包**，无外部依赖、无宿主私有契约。
 
-当前版本：**1.7.6**（见 `VERSION`）。
+当前版本：**1.7.7**（见 `VERSION`）。
 
 ## ✨ 特性
 
@@ -29,6 +29,7 @@
 - **选题情报闭环**：rank-dispatcher 聚合 7 平台榜单为 rank-index.json，topic-to-book scan --from-rank 读缓存算「蓝海指数」（热榜命中热度 ÷ 题材竞争度）；加 --refresh 可一键刷新实时热榜再分析（失败回退缓存），动笔前知道写什么能火
 - **排行榜统一底座**：rank-dispatcher 统一调度 7 个平台 rank-scraper（失败隔离），让沉睡的爬虫数据变成选题情报源
 - **追读回落门禁**：quality-gate 新增 pacing 维度（advisory），写完一章若最新章追读密度低于阈值即预警，防默默掉追读
+- **多平台追读复盘**：topic-to-book review 复用 pacing-density，对起点/番茄分别汇总真实追读率（均值/最新/完读均值/低于阈值章节），逐平台给建议；未填则回落结构性代理
 - **实时风格护栏**：drift-guard 写完一章跑，聚焦该章文风 z-score 漂移，advisory 不阻断，可作编辑器保存钩子
 - **37 题材库**：开书即选中文网文题材模板（修仙/都市/科幻/言情…）作为设定基底
 - **扫榜选题**：起点/番茄/晋江/刺猬猫/七猫/豆瓣/黑岩 爬虫，辅助选题

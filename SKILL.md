@@ -226,9 +226,10 @@ node scripts/topic-to-book.js scan --from-rank [--refresh] --rank-dir data/rank 
 node scripts/topic-to-book.js match   --topic "重生爽文"                                  # 选题匹配题材库
 node scripts/topic-to-book.js scaffold --genre 修仙 --title "我的书" [--gender 男频] [--platform 起点]   # 开书骨架（设定/正文/追踪/大纲/记忆 + 追踪文件 + 大纲模板）
 node scripts/topic-to-book.js plan    --dir <项目目录> [--words 3000]                     # 今日配速（章节数 + outline-pacer 结构配比）
-node scripts/topic-to-book.js review  --dir <项目目录>                                    # 追读复盘（字数/密度序列/水章预警/记忆条数）
+node scripts/topic-to-book.js review  --dir <项目目录>                                    # 追读复盘（字数/密度序列/水章预警/记忆条数 + 起点·番茄逐平台真实率复盘与建议）
 ```
-- 不重复造轮子：通过 child_process 复用 `genre-library` / `outline-pacer` / `tracking-updater` / `pacing-density` / `learn-bank`；review 直接 require `pacing-density` 拿曲线。
+- 不重复造轮子：通过 child_process 复用 `genre-library` / `outline-pacer` / `tracking-updater` / `pacing-density` / `learn-bank`；review 直接 require `pacing-density` 拿曲线（**有效密度 eff = 多平台真实率均值**，未填则结构性归一分）。
+- review 的「平台复盘」段对 **起点 / 番茄** 分别汇总真实追读率（均值/最新/完读均值/低于阈值的章节），逐平台给出建议：某平台偏低即单独警告并提示下一章补钩子/爽点/回收伏笔；均未填则只给结构性代理结论。
 - scaffold 输出标准写作流水线提示（每章严格按 `SKILL.md`「写章标准流程」6 步：写章 → tracking-updater(+`reading-power`) → 去味/格式 → quality-gate(含 pacing) → drift-guard → learn-bank+backup）。
 
 ### 自测套件 `selftest.js`

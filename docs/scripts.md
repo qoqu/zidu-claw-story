@@ -241,7 +241,7 @@ node scripts/promo-pack.js runbook  <项目目录> --platforms 微博,小红书,
 
 | 脚本 | 作用 |
 |---|---|
-| `topic-to-book.js` | 选题→成书闭环编排：scan（题材风向）/ match（选题匹配）/ scaffold（开书骨架）/ plan（每日配速）/ review（追读复盘），通过 child_process 复用 genre-library / outline-pacer / tracking-updater / pacing-density / learn-bank |
+| `topic-to-book.js` | 选题→成书闭环编排：scan（题材风向）/ match（选题匹配）/ scaffold（开书骨架）/ plan（每日配速）/ review（追读复盘），通过 child_process 复用 genre-library / outline-pacer / tracking-updater / pacing-density / learn-bank；review 复用 `pacing-density.computeSeries`，有效密度 eff = 多平台真实率均值，并输出 **起点/番茄逐平台复盘**（真实率均值/最新/完读均值/低于阈值章节 + 逐平台建议） |
 | `selftest.js` | 自测套件：阶段1 语法检查 + 阶段2 启动冒烟 + 阶段3 功能冒烟（tracking-updater init → dashboard → learn-bank → genre-library → outline-pacer），回归护栏 |
 
 ```bash

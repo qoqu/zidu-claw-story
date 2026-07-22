@@ -178,6 +178,25 @@ ${(() => { const w = series.filter(s => s.eff < waterTh || (s.realRates && Objec
 </body></html>`;
 }
 
+// 复用入口：给定项目目录 + 阈值，算出 series（含 eff / realRates）/ 水章列表。
+// topic-to-book.js review 与 quality-gate.js pacing 维度共用此函数，避免重复解析逻辑。
+function computeSeries(projectDir, waterTh = 45) {
+  const chapters = parseReadingPower(projectDir);
+  if (!chapters) return null;
+  const rawScores = chapters.map(densityScore);
+  const maxRaw = Math.max(...rawScores, 0.0001);
+  const series = chapters.map((ch, i) => {
+    const norm = Math.round((rawScores[i] / maxRaw) * 100);
+    // 有效密度 eff：多平台真实率均值（已是 0-100），否则回退结构性归一分
+    const filledRates = (ch.realRates ? Object.values(ch.realRates).map(r => r.rate).filter(v => v != null) : []);
+    const eff = filledRates.length ? Math.round(filledRates.reduce((a, b) => a + b, 0) / filledRates.length) : norm;
+    const realRate = filledRates.length ? eff : null; // 代表值，供 quality-gate 透传
+    return { ...ch, raw: rawScores[i], norm, eff, realRate };
+  });
+  const waterChapters = series.filter(s => s.eff < waterTh || (s.realRates && Object.values(s.realRates).some(r => r.rate != null && r.rate < waterTh)));
+  return { series, waterChapters, waterTh, chapters };
+}
+
 function main() {
   const argv = process.argv.slice(2);
   const jsonMode = argv.includes('--json');
@@ -193,21 +212,10 @@ function main() {
   const projectDir = path.resolve(filtered[0]);
   if (!fs.existsSync(projectDir)) { err(`项目目录不存在: ${projectDir}`); return 1; }
 
-  const chapters = parseReadingPower(projectDir);
-  if (!chapters) { err('未找到 追踪/追读力.md 或其中无章节块。请先运行 tracking-updater.js reading-power。'); return 2; }
-
-  const rawScores = chapters.map(densityScore);
-  const maxRaw = Math.max(...rawScores, 0.0001);
-  const series = chapters.map((ch, i) => {
-    const norm = Math.round((rawScores[i] / maxRaw) * 100);
-    // 有效密度 eff：多平台真实率均值（已是 0-100），否则回退结构性归一分
-    const filledRates = (ch.realRates ? Object.values(ch.realRates).map(r => r.rate).filter(v => v != null) : []);
-    const eff = filledRates.length ? Math.round(filledRates.reduce((a, b) => a + b, 0) / filledRates.length) : norm;
-    const realRate = filledRates.length ? eff : null; // 代表值，供 quality-gate 透传
-    return { ...ch, raw: rawScores[i], norm, eff, realRate };
-  });
-
-  const waterChapters = series.filter(s => s.eff < waterTh || (s.realRates && Object.values(s.realRates).some(r => r.rate != null && r.rate < waterTh)));
+  const comp = computeSeries(projectDir, waterTh);
+  if (!comp) { err('未找到 追踪/追读力.md 或其中无章节块。请先运行 tracking-updater.js reading-power。'); return 2; }
+  const series = comp.series;
+  const waterChapters = comp.waterChapters;
 
   if (jsonMode) {
     console.log(JSON.stringify({ project: path.basename(projectDir), waterThreshold: waterTh, chapters: series, waterChapters: waterChapters.map(s => s.chapter) }, null, 2));
@@ -233,4 +241,4 @@ if (require.main === module) {
   try { process.exit(main()); }
   catch (e) { err(`执行失败: ${e && e.message ? e.message : e}`); process.exit(2); }
 }
-module.exports = { parseReadingPower, densityScore, buildHtml };
+module.exports = { parseReadingPower, densityScore, buildHtml, computeSeries };
