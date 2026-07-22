@@ -25,7 +25,7 @@
 | `emotion-analyzer.js` | 情绪曲线分析 |
 | `satisfaction-meter.js` | 爽点密度测量 |
 | `detect-story-gaps.js` | 剧情缺口检测（--full 深入） |
-| `pacing-density.js` | 追读密度曲线（pacing 维度复用，质量门禁的追读回落预警数据源；`--real-rate` 填真实率后由真实率接管信号，否则结构性归一分） |
+| `pacing-density.js` | 追读密度曲线（pacing 维度复用，质量门禁的追读回落预警数据源；支持多平台真实率：`--qidian-rate/--qidian-finish`(起点)、`--fanqie-rate/--fanqie-finish`(番茄)、`--real-rate`(通用)，填了则由真实率均值接管 eff 信号，否则结构性归一分） |
 | `writing-scorer.js` | 综合评分（0-100） |
 
 ```bash
@@ -177,7 +177,7 @@ node scripts/learn-bank.js <项目目录> stats
 
 | 脚本 | 作用 |
 |---|---|
-| `pacing-density.js` | 节奏密度曲线：解析 `追踪/追读力.md` 每章块，合成追读密度分(0-100)，ASCII 曲线 + 水章标记 + `--html` 折线图（蓝=结构性归一分、橙虚线=真实率、红=水章）；`--real-rate` 填真实率后有效密度 eff 改由真实率接管 |
+| `pacing-density.js` | 节奏密度曲线：解析 `追踪/追读力.md` 每章块，合成追读密度分(0-100)，ASCII 曲线 + 水章标记 + `--html` 折线图（灰虚线=结构性归一分、蓝/橙实线=起点/番茄真实率、红=水章）；多平台真实率填了后有效密度 eff 改由真实率均值接管，任一平台低于阈值即水章预警 |
 | `style-drift.js` | 文风漂移检测：逐章算句长/对话比/标点密度/用词丰富度，与全书均值比 z-score，标记 `\|z\|>1.5` 的漂移章 |
 | `dashboard.js` | 多项目仪表盘：扫描根目录下属项目，聚合章节数/总字数/最新章/最新追读密度/doctor 健康度/记忆条数；`--html` 卡片含每本书追读密度火花线(SVG)与健康度进度条 |
 | `drift-guard.js` | 实时风格护栏：写完一章跑，复用 style-drift 只聚焦传入章的 z-score 漂移，advisory 不阻断，可作编辑器保存钩子 |

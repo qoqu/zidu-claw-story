@@ -315,6 +315,7 @@ function main() {
         threshold: th,
         warning: eff < th,
         realRate: last.realRate != null ? last.realRate : null,
+        realRates: last.realRates || null,
         waterChapters: pdData.waterChapters || [],
       };
     } else if (pdData && Array.isArray(pdData.chapters)) {
@@ -459,9 +460,9 @@ function main() {
     } else if (s.status === 'error') {
       console.log('⚠️ 追读回落：追读数据读取异常');
     } else if (s.warning) {
-      console.log(`⚠️ 追读回落：第${s.latestChapter}章 有效密度 ${s.latestDensity}${s.realRate != null ? `（真实率 ${s.realRate}%）` : ''} < 阈值 ${s.threshold}，疑似水章，建议补钩子/爽点`);
+      console.log(`⚠️ 追读回落：第${s.latestChapter}章 有效密度 ${s.latestDensity}${s.realRates ? '（' + Object.entries(s.realRates).filter(([p, r]) => r.rate != null).map(([p, r]) => p + r.rate + '%').join('/') + '）' : (s.realRate != null ? `（真实率 ${s.realRate}%）` : '')} < 阈值 ${s.threshold}，疑似水章，建议补钩子/爽点`);
     } else {
-      console.log(`✅ 追读回落：第${s.latestChapter}章 有效密度 ${s.latestDensity}${s.realRate != null ? `（真实率 ${s.realRate}%）` : ''}（≥ 阈值 ${s.threshold}）`);
+      console.log(`✅ 追读回落：第${s.latestChapter}章 有效密度 ${s.latestDensity}${s.realRates ? '（' + Object.entries(s.realRates).filter(([p, r]) => r.rate != null).map(([p, r]) => p + r.rate + '%').join('/') + '）' : (s.realRate != null ? `（真实率 ${s.realRate}%）` : '')}（≥ 阈值 ${s.threshold}）`);
     }
   }
 

@@ -291,13 +291,32 @@ function afterChapter(projectDir, chapterNum, summary) {
 // ===== 追读力（借鉴 webnovel-writer 设计思路，WB 原生纯 Markdown 重写） =====
 const RP_FILE = '追读力.md';
 function rpPath(projectDir) { return path.join(projectDir, TRACK_DIR, RP_FILE); }
-const RP_TPL = '# 追读力追踪\n\n> 用途：量化「读者追读动力」。每章写完后由 AI 从正文提取钩子/爽点/微兑现后记录，\n> 用于下一章任务书注入（剩余≤5 或超期的钩子必须处理），维持读者追更欲望。\n> 可选真实数据回填（方案①）：从平台作家后台手抄「真实追读率/真实完读率」，填了则 pacing 信号改由真实率接管（结构性代理回退为参考）。\n\n## 章节追读力快照\n';
+const RP_TPL = '# 追读力追踪\n\n> 用途：量化「读者追读动力」。每章写完后由 AI 从正文提取钩子/爽点/微兑现后记录，\n> 用于下一章任务书注入（剩余≤5 或超期的钩子必须处理），维持读者追更欲望。\n> 可选真实数据回填（方案①）：从平台作家后台手抄「真实追读率/真实完读率」，填了则 pacing 信号改由真实率接管（结构性代理回退为参考）。\n> 支持多平台分别回填：起点（--qidian-rate/--qidian-finish）、番茄（--fanqie-rate/--fanqie-finish）；也可用 --real-rate/--real-finish 填通用值。\n\n## 章节追读力快照\n';
 
 /**
  * 记录/更新某章的追读力快照。
  * @param {number} chapterNum
  * @param {object} opts { hookType, hookStrength, coolpoints:[], micropayoffs:[], hardViolations:[], debt }
  */
+// 多平台真实数据回填（方案①）：起点 / 番茄；通用（--real-rate）向后兼容 v1.7.5
+const RP_PLATFORMS = ['起点', '番茄'];
+function buildRealRateLines(realRates, generic) {
+  let out = '';
+  for (const plat of RP_PLATFORMS) {
+    const r = realRates && realRates[plat];
+    if (r && (r.rate != null || r.finish != null)) {
+      out += `- 真实追读率(${plat})：${r.rate != null ? r.rate : '—'}\n`;
+      out += `- 真实完读率(${plat})：${r.finish != null ? r.finish : '—'}\n`;
+    }
+  }
+  if (generic && (generic.rate != null || generic.finish != null)) {
+    out += `- 真实追读率：${generic.rate != null ? generic.rate : '—'}\n`;
+    out += `- 真实完读率：${generic.finish != null ? generic.finish : '—'}\n`;
+  }
+  if (!out) out = '- 真实数据：—（未回填，pacing 用结构性代理）\n';
+  return out;
+}
+
 function doReadingPower(projectDir, chapterNum, opts) {
   const fp = rpPath(projectDir);
   let content = readFile(fp) || RP_TPL;
@@ -307,9 +326,13 @@ function doReadingPower(projectDir, chapterNum, opts) {
   const mps = (opts.micropayoffs && opts.micropayoffs.length) ? opts.micropayoffs.join('、') : '—';
   const hv = (opts.hardViolations && opts.hardViolations.length) ? opts.hardViolations.join('、') : '无';
   const debt = (opts.debt === undefined || opts.debt === null) ? 0 : opts.debt;
-  // 可选真实数据回填（方案①）：从平台作家后台手抄，不填则为「—」，不影响结构性代理
-  const rr = (opts.realRate && String(opts.realRate).trim()) ? String(opts.realRate).trim() : '—';
-  const rf = (opts.realFinish && String(opts.realFinish).trim()) ? String(opts.realFinish).trim() : '—';
+  // 可选真实数据回填（方案①）：从平台作家后台手抄；不填则为「—」，不影响结构性代理。
+  // 支持多平台：起点/番茄（--qidian-* / --fanqie-*）及通用（--real-rate/--real-finish，向后兼容 v1.7.5）。
+  const realRates = opts.realRates || {};
+  const generic = (opts.realRate !== undefined && opts.realRate !== null)
+    ? { rate: opts.realRate, finish: opts.realFinish }
+    : null;
+  const realLines = buildRealRateLines(realRates, generic);
   const block =
     `### 第${chapterNum}章\n` +
     `- 钩子类型：${h}　强度：${hs}\n` +
@@ -317,8 +340,7 @@ function doReadingPower(projectDir, chapterNum, opts) {
     `- 微兑现：${mps}\n` +
     `- 硬约束违规：${hv}\n` +
     `- 债务余额：${debt}\n` +
-    `- 真实追读率：${rr}\n` +
-    `- 真实完读率：${rf}\n`;
+    realLines;
   const re = new RegExp(`### 第${chapterNum}章[\\s\\S]*?(?=\\n### 第|$)`, 'm');
   if (re.test(content)) {
     content = content.replace(re, block.trimEnd());
@@ -328,7 +350,13 @@ function doReadingPower(projectDir, chapterNum, opts) {
     content = content.replace('## 章节追读力快照\n', `## 章节追读力快照\n${block}`);
     log(`记录追读力：第${chapterNum}章`);
   }
-  log(`  钩子[${h}/${hs}] 爽点[${cps}] 微兑现[${mps}] 硬违规[${hv}] 债务[${debt}] 真实率[${rr}]`);
+  const realSummary = (() => {
+    const parts = [];
+    for (const p of RP_PLATFORMS) if (realRates[p] && realRates[p].rate != null) parts.push(`${p}${realRates[p].rate}%`);
+    if (generic && generic.rate != null) parts.push(`通用${generic.rate}%`);
+    return parts.length ? parts.join('/') : '—';
+  })();
+  log(`  钩子[${h}/${hs}] 爽点[${cps}] 微兑现[${mps}] 硬违规[${hv}] 债务[${debt}] 真实率[${realSummary}]`);
   writeFile(fp, content);
   return 0;
 }
@@ -453,6 +481,10 @@ function main() {
         debt: (() => { const d = getOpt(rest, 'debt'); return d === undefined ? undefined : parseFloat(d); })(),
         realRate: getOpt(rest, 'real-rate'),
         realFinish: getOpt(rest, 'real-finish'),
+        realRates: {
+          起点: { rate: getOpt(rest, 'qidian-rate'), finish: getOpt(rest, 'qidian-finish') },
+          番茄: { rate: getOpt(rest, 'fanqie-rate'), finish: getOpt(rest, 'fanqie-finish') },
+        },
       };
       const ch = parseInt(getOpt(rest, 'chapter'), 10) || getLastChapter(projectDir) || 0;
       if (!ch) { err('缺少 --chapter N'); return 1; }
