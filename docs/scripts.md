@@ -245,7 +245,7 @@ node scripts/promo-pack.js runbook  <项目目录> --platforms 微博,小红书,
 ```bash
 # 选题→成书（从热点到开书骨架）
 node scripts/topic-to-book.js scan --kw 扮猪吃虎
-node scripts/topic-to-book.js scan --from-rank --rank-dir data/rank   # 读排行榜缓存算蓝海指数选题榜
+node scripts/topic-to-book.js scan --from-rank [--refresh] --rank-dir data/rank   # 蓝海指数选题榜（--refresh 一键刷热榜，失败回退缓存）
 node scripts/topic-to-book.js match --topic "重生爽文"
 node scripts/topic-to-book.js scaffold --genre 修仙 --title "我的书" [--gender 男频] [--platform 起点]
 node scripts/topic-to-book.js plan    --dir <项目目录> [--words 3000]

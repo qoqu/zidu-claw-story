@@ -15,6 +15,7 @@
  *
  * 用法：
  *   node topic-to-book.js scan    [--kw 扮猪吃虎] [--platform 番茄] [--gender 男频]
+ *   node topic-to-book.js scan    --from-rank [--refresh] [--rank-dir data/rank]   # 实时蓝海指数（--refresh 自动刷热榜）
  *   node topic-to-book.js match   --topic "重生爽文"
  *   node topic-to-book.js scaffold --genre 修仙 --title "我的书" [--dir 项目路径] [--gender 男频] [--platform 起点]
  *   node topic-to-book.js plan    --dir <项目目录> [--words 3000] [--chapter N]
@@ -55,7 +56,13 @@ function getOpt(argv, k, def = '') {
 // ===== scan：选题情报（离线 / 蓝海指数） =====
 function cmdScan(argv) {
   if (argv.includes('--from-rank')) {
-    return cmdScanBlueOcean(getOpt(argv, '--rank-dir', 'data/rank'));
+    const rankDir = getOpt(argv, '--rank-dir', 'data/rank');
+    if (argv.includes('--refresh')) {
+      log('选题情报 · 刷新实时热榜（--refresh，需浏览器/CDP，失败自动回退本地缓存）');
+      run('rank-dispatcher.js', ['refresh', '--dir', rankDir], { timeout: 600000 });
+      info('热榜刷新流程结束（失败平台已隔离），开始蓝海分析');
+    }
+    return cmdScanBlueOcean(rankDir);
   }
   const kw = getOpt(argv, '--kw');
   const platform = getOpt(argv, '--platform');
@@ -76,8 +83,8 @@ function cmdScan(argv) {
 function cmdScanBlueOcean(rankDir) {
   const index = scanRank(rankDir);
   if (!index || !index.platforms.length) {
-    warn('无榜单缓存：请先运行 `node rank-dispatcher.js refresh --dir ' + rankDir + '`');
-    info('或手动把各平台榜单 MD 放到 ' + rankDir + '/<平台>/ 下，再 scan --from-rank');
+    warn('无榜单缓存：加 --refresh 自动刷热榜，或先运行 `node rank-dispatcher.js refresh --dir ' + rankDir + '`');
+    info('也可手动把各平台榜单 MD 放到 ' + rankDir + '/<平台>/ 下，再 scan --from-rank');
     return 1;
   }
   const genreHeat = {};   // 题材 -> 累计热度
@@ -123,6 +130,7 @@ function cmdScanBlueOcean(rankDir) {
 
   log('选题情报 · 蓝海指数榜（来源：' + index.platformCount + ' 平台 / ' + index.totalEntries + ' 条榜单）');
   info('蓝海指数 = 热榜命中热度 ÷ 竞争度(平台数 + 标签×0.5)；越高越值得写');
+  info('数据时间：' + (index.generatedAt ? index.generatedAt.slice(0, 19).replace('T', ' ') : '未知'));
   console.log('');
   console.log(BOLD + '排名  题材        指数  热度  命中  平台×标签' + RESET);
   if (!rows.length) {
@@ -329,7 +337,7 @@ function main() {
   const map = { scan: cmdScan, match: cmdMatch, scaffold: cmdScaffold, plan: cmdPlan, review: cmdReview };
   if (!sub || !map[sub]) {
     console.error(`${RED}用法：${RESET}node topic-to-book.js <scan|match|scaffold|plan|review> [选项]`);
-    console.error('  scan    题材风向（离线）');
+    console.error('  scan    [--from-rank [--refresh] [--rank-dir D]] 选题情报');
     console.error('  match   --topic "..." 选题匹配');
     console.error('  scaffold --genre X --title Y [--dir D]');
     console.error('  plan    --dir D [--words 3000]');
