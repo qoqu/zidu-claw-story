@@ -21,30 +21,12 @@
 const fs = require("fs");
 const path = require("path");
 const { ab, sleep, scrollLoad, getArg } = require("./cdp-utils");
+// evalJSON（base64 传参）来自共享底座，避免 7 个爬虫各自 copy 一份
+const { evalJSON } = require("./rank-common");
 
 // 一次详情请求的并发批大小。番茄详情页用同步 XHR 拉取，批太大会撞上
 // cdp-utils 里 ab() 的 20s 超时，导致整批返回空 → 书名全部回退成 bookId。
 const DETAIL_CHUNK = 5;
-
-// ---------------------------------------------------------------------------
-// eval 封装：统一走 base64，规避复杂 JS（正则/引号/反斜杠）的 shell 转义问题
-// ---------------------------------------------------------------------------
-
-/** 在浏览器内执行 JS（base64 传参）并解析 JSON 返回值 */
-function evalJSON(port, js) {
-  const b64 = Buffer.from(String(js), "utf-8").toString("base64");
-  const raw = ab(port, "eval", "-b", b64);
-  if (!raw || raw === "ERR") return null;
-  try {
-    let parsed = JSON.parse(raw);
-    if (typeof parsed === "string") {
-      try { parsed = JSON.parse(parsed); } catch {}
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
 
 // ---------------------------------------------------------------------------
 // 页面提取

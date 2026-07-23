@@ -25,6 +25,8 @@
 const fs = require("fs");
 const path = require("path");
 const { ab, sleep, getArg } = require("./cdp-utils");
+// evalJSON / probePage 来自共享底座，避免 7 个爬虫各自 copy
+const { evalJSON, probePage } = require("./rank-common");
 
 const BASE_URL = "https://www.jjwxc.net/topten.php";
 
@@ -39,33 +41,6 @@ const RANK_TYPES = [
 
 // 详情请求批大小（async fetch 并发，整批控制在 ab() 20s 超时内）
 const DETAIL_CHUNK = 6;
-
-// ---------------------------------------------------------------------------
-// eval 封装：统一走 base64，规避复杂 JS 的 shell 转义问题（与 fanqie 一致）
-// ---------------------------------------------------------------------------
-
-function evalJSON(port, js) {
-  const b64 = Buffer.from(String(js), "utf-8").toString("base64");
-  const raw = ab(port, "eval", "-b", b64);
-  if (!raw || raw === "ERR") return null;
-  try {
-    let parsed = JSON.parse(raw);
-    if (typeof parsed === "string") {
-      try { parsed = JSON.parse(parsed); } catch {}
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-/** 连通性 + 页面就绪自检 */
-function probePage(port) {
-  return evalJSON(
-    port,
-    "JSON.stringify({host:location.host,len:(document.body&&document.body.innerText||'').length})"
-  );
-}
 
 // ---------------------------------------------------------------------------
 // 列表页提取

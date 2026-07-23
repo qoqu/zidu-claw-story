@@ -20,6 +20,8 @@
 const fs = require("fs");
 const path = require("path");
 const { ab, sleep, evalJSON, safeStr, getArg } = require("./cdp-utils");
+// 单本书 Markdown 渲染来自共享底座（evalJSON/probePage 因 API 模式特殊，保留本地）
+const { pushBookBlock } = require("./rank-common");
 
 const BOOKLIST_URL = "https://manage.zhangwenpindu.cn/books/booklist";
 const API_BASE = "https://ms.zhangwenpindu.cn";
@@ -116,29 +118,27 @@ function buildAndSave(allBooks, total, filtered, filepath) {
     for (let i = 0; i < g.books.length; i++) {
       try {
         const b = g.books[i];
-        lines.push(`### #${i + 1} ${b.name}`);
-        const meta = [
-          b.userName,
-          b.classifyStr + "/" + b.typeDesc,
-          b.words ? b.words.toLocaleString() + "字" : "",
-          b.price ? b.price + "钻" : "",
-          b.open ? "公开" : "未公开",
-        ].filter(Boolean).join(" · ");
-        if (meta) lines.push(`*${meta}*`);
-
-        if (b.createTime) lines.push(`**创建：** ${b.createTime}`);
-        if (b.updateTime) lines.push(`**更新：** ${b.updateTime}`);
-
-        if (b.tags && b.tags.length) {
-          lines.push(`**标签：** ${b.tags.join("、")}`);
-        }
-
-        if (b.description) {
-          lines.push("");
-          lines.push(`> ${b.description.substring(0, 200)}${b.description.length > 200 ? "..." : ""}`);
-        }
-
-        lines.push("");
+        const extraLines = [];
+        if (b.createTime) extraLines.push(`**创建：** ${b.createTime}`);
+        if (b.updateTime) extraLines.push(`**更新：** ${b.updateTime}`);
+        pushBookBlock(
+          lines,
+          {
+            rank: i + 1,
+            title: b.name,
+            meta: [
+              b.userName,
+              b.classifyStr + "/" + b.typeDesc,
+              b.words ? b.words.toLocaleString() + "字" : "",
+              b.price ? b.price + "钻" : "",
+              b.open ? "公开" : "未公开",
+            ],
+            tags: b.tags,
+            desc: b.description,
+            extraLines,
+          },
+          { descQuote: true, descMax: 200 }
+        );
       } catch (bookErr) {
         console.error(`[heiyan] ${g.label} 第${i + 1}条处理出错: ${bookErr.message}`);
         lines.push("");

@@ -21,6 +21,8 @@
 const fs = require("fs");
 const path = require("path");
 const { ab, sleep, safeStr, scrollLoad, getArg } = require("./cdp-utils");
+// 通用 CDP 脚手架来自共享底座
+const { evalJSON, probePage, clickTab, pushBookBlock } = require("./rank-common");
 
 const CHANNELS = [
   { id: "male", label: "男频", tab: "男频", url: "https://www.ishugui.com/browse" },
@@ -28,46 +30,8 @@ const CHANNELS = [
 ];
 
 // ---------------------------------------------------------------------------
-// eval 封装：统一走 base64，规避复杂 JS（正则/引号/反斜杠）的 shell 转义问题
-// ---------------------------------------------------------------------------
-
-function evalJSON(port, js) {
-  const b64 = Buffer.from(String(js), "utf-8").toString("base64");
-  const raw = ab(port, "eval", "-b", b64);
-  if (!raw || raw === "ERR") return null;
-  try {
-    let parsed = JSON.parse(raw);
-    if (typeof parsed === "string") {
-      try { parsed = JSON.parse(parsed); } catch {}
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-// ---------------------------------------------------------------------------
 // 页面操作
 // ---------------------------------------------------------------------------
-
-/** 连通性 + 页面就绪自检 */
-function probePage(port) {
-  return evalJSON(
-    port,
-    "JSON.stringify({host:location.host,len:(document.body&&document.body.innerText||'').length})"
-  );
-}
-
-/** 点击指定文本的 tab */
-function clickTab(port, text) {
-  const js =
-    "JSON.stringify((function(){" +
-    "var all=document.querySelectorAll('div,span,a,button,li');" +
-    "var el=Array.from(all).find(function(e){return (e.textContent||'').trim()===" + safeStr(text) + "});" +
-    "if(el){el.click();return true}return false" +
-    "})())";
-  return evalJSON(port, js);
-}
 
 /**
  * 以 /book/{id} 链接为骨架聚合每本书的字段。
@@ -208,16 +172,18 @@ function scrapeChannel(port, channelId) {
 
   stories.forEach((s, i) => {
     try {
-      lines.push(`### #${i + 1} ${s.title || "（书名待解析）"}`);
-      const meta = [s.author, s.tag, s.status, s.words, s.score].filter(Boolean).join(" · ");
-      if (meta) lines.push(`*${meta}*`);
-      if (s.update) lines.push(`**最新：** ${s.update}`);
-      if (s.url) lines.push(`[作品页](${s.url})`);
-      if (s.desc) {
-        lines.push("");
-        lines.push(`> ${s.desc.substring(0, 150)}${s.desc.length > 150 ? "..." : ""}`);
-      }
-      lines.push("", "---", "");
+      pushBookBlock(
+        lines,
+        {
+          rank: i + 1,
+          title: s.title || "（书名待解析）",
+          meta: [s.author, s.tag, s.status, s.words, s.score],
+          update: s.update,
+          url: s.url,
+          desc: s.desc,
+        },
+        { updateLabel: "最新", descQuote: true, descMax: 150 }
+      );
     } catch (storyErr) {
       console.error(`[dz] ${ch.label} 第${i + 1}条处理出错: ${storyErr.message}`);
       lines.push("", "---", "");
