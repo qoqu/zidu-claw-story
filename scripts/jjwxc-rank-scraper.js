@@ -25,8 +25,8 @@
 const fs = require("fs");
 const path = require("path");
 const { ab, sleep, getArg } = require("./cdp-utils");
-// evalJSON / probePage 来自共享底座，避免 7 个爬虫各自 copy
-const { evalJSON, probePage } = require("./rank-common");
+// evalJSONB64 / probePage 来自共享底座，避免 7 个爬虫各自 copy
+const { evalJSONB64, probePage } = require("./rank-common");
 
 const BASE_URL = "https://www.jjwxc.net/topten.php";
 
@@ -97,7 +97,7 @@ function extractRankData(port) {
     "}" +
     "return result" +
     "})())";
-  return evalJSON(port, js);
+  return evalJSONB64(port, js);
 }
 
 // ---------------------------------------------------------------------------
@@ -126,7 +126,7 @@ function fetchDetails(port, ids) {
   const map = {};
   for (let i = 0; i < ids.length; i += DETAIL_CHUNK) {
     const chunk = ids.slice(i, i + DETAIL_CHUNK);
-    const part = evalJSON(port, buildDetailJS(chunk)) || {};
+    const part = evalJSONB64(port, buildDetailJS(chunk)) || {};
     Object.assign(map, part);
     sleep(400);
   }

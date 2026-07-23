@@ -21,8 +21,8 @@
 const fs = require("fs");
 const path = require("path");
 const { ab, sleep, scrollLoad, getArg } = require("./cdp-utils");
-// evalJSON（base64 传参）来自共享底座，避免 7 个爬虫各自 copy 一份
-const { evalJSON } = require("./rank-common");
+// evalJSONB64（base64 传参）来自共享底座，避免 7 个爬虫各自 copy 一份
+const { evalJSONB64 } = require("./rank-common");
 
 // 一次详情请求的并发批大小。番茄详情页用同步 XHR 拉取，批太大会撞上
 // cdp-utils 里 ab() 的 20s 超时，导致整批返回空 → 书名全部回退成 bookId。
@@ -38,7 +38,7 @@ const DETAIL_CHUNK = 5;
  * 「页已加载但 state 未注入」的半成品态，故这里额外确认 hasState。
  */
 function probePage(port) {
-  return evalJSON(
+  return evalJSONB64(
     port,
     "JSON.stringify({host:location.host,hasState:!!window.__INITIAL_STATE__})"
   );
@@ -64,7 +64,7 @@ function buildCategoriesJS(prefix) {
 /** 提取侧边菜单品类链接 */
 function extractCategories(port, channel, type) {
   const prefix = `/rank/${channel}_${type}_`;
-  return evalJSON(port, buildCategoriesJS(prefix)) || [];
+  return evalJSONB64(port, buildCategoriesJS(prefix)) || [];
 }
 
 /**
@@ -104,7 +104,7 @@ function buildBookListJS() {
 }
 
 function extractBookList(port) {
-  const list = evalJSON(port, buildBookListJS());
+  const list = evalJSONB64(port, buildBookListJS());
   return Array.isArray(list) ? list : [];
 }
 
@@ -165,7 +165,7 @@ function buildDetailJS(ids) {
 }
 
 function fetchDetailsChunk(port, ids) {
-  return evalJSON(port, buildDetailJS(ids)) || {};
+  return evalJSONB64(port, buildDetailJS(ids)) || {};
 }
 
 /** 分批解码，避免单次 eval 超时；返回合并后的 map */

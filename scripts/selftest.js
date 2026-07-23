@@ -136,6 +136,20 @@ function phaseFunctional(dir) {
   }
   if (gmOut && !/genre-catalog/.test(gmOut)) fails.push('genre-methodology route 未召回 genre-catalog');
 
+  // 5b) retrieval 跨 references BM25 召回（⑥②(b) 检索增强）
+  let rtOut = '';
+  try {
+    rtOut = execFileSync(node, [path.join(dir, 'retrieval.js'), 'search', '爽点套路', '--top', '2', '--json'], { stdio: 'pipe', timeout: 20000 }).toString();
+  } catch (e) {
+    fails.push('retrieval search 失败：' + ((e.stderr || '').toString().trim().split('\n')[0] || e.message));
+  }
+  if (rtOut) {
+    try {
+      const rt = JSON.parse(rtOut);
+      if (!rt.total || !Array.isArray(rt.hits) || rt.hits.length === 0) fails.push('retrieval 召回为空（库/索引异常）');
+    } catch { fails.push('retrieval 输出非合法 JSON'); }
+  }
+
   // 5) outline-pacer 对一份示例细纲
   try {
     fs.writeFileSync(path.join(proj, '大纲', '细纲.md'),

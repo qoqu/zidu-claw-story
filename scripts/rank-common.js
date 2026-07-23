@@ -8,7 +8,7 @@
  * 「不重写 7 个爬虫主体，保留各平台 CDP 适配差异」的设计原则。
  *
  * 导出：
- *   - evalJSON(port, js)       浏览器内执行 JS（base64 传参，规避复杂 JS 的 shell 转义）
+ *   - evalJSONB64(port, js)    浏览器内执行 JS（base64 传参，规避复杂 JS 的 shell 转义）
  *   - probePage(port)         连通性 + 页面就绪自检（host + body 文本长度）
  *   - clickTab(port, text, opts)        按文本点击 tab（opts.trailing 支持 "榜" 后缀匹配）
  *   - clickTabRetry(port, text, opts)   clickTab 失败重试一次
@@ -21,10 +21,10 @@ const { ab, sleep } = require("./cdp-utils");
 
 /**
  * 在浏览器内执行 JS 并解析 JSON 返回值。
- * 注意：走 base64（-b）传参，与 cdp-utils.evalJSON 的裸 eval 不同——
+ * 注意：走 base64（-b）传参，与 cdp-utils.evalJSON 的裸 eval 不同（已重命名为 evalJSONB64 以消除同名混淆）——
  * 榜单页内联 JS 含正则/引号/反斜杠，base64 可规避 shell 转义问题。
  */
-function evalJSON(port, js) {
+function evalJSONB64(port, js) {
   const b64 = Buffer.from(String(js), "utf-8").toString("base64");
   const raw = ab(port, "eval", "-b", b64);
   if (!raw || raw === "ERR") return null;
@@ -43,7 +43,7 @@ function evalJSON(port, js) {
 
 /** 连通性 + 页面就绪自检（host + body 文本长度，区分 CDP 未连 vs 被重定向） */
 function probePage(port) {
-  return evalJSON(
+  return evalJSONB64(
     port,
     "JSON.stringify({host:location.host,len:(document.body&&document.body.innerText||'').length})"
   );
@@ -58,7 +58,7 @@ function clickTab(port, text, opts = {}) {
     var el=Array.from(all).find(function(e){var t=(e.textContent||'').trim();return variants.indexOf(t)>=0;});
     if(el){el.click();return true}return false
   })())`;
-  return evalJSON(port, js);
+  return evalJSONB64(port, js);
 }
 
 /** 点 tab，失败后等一拍重试一次（tab 异步渲染可能滞后） */
@@ -97,7 +97,7 @@ function extractBookUrls(port, opts = {}) {
     });
     return order.map(function(id){return {bookId:id,title:byId[id],url:${JSON.stringify(urlPrefix)}+id};});
   })())`;
-  return evalJSON(port, js) || [];
+  return evalJSONB64(port, js) || [];
 }
 
 /**
@@ -142,7 +142,7 @@ function dateStamp(d) {
 }
 
 module.exports = {
-  evalJSON,
+  evalJSONB64,
   probePage,
   clickTab,
   clickTabRetry,

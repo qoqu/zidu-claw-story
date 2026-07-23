@@ -22,7 +22,7 @@ const fs = require("fs");
 const path = require("path");
 const { ab, sleep, safeStr, scrollLoad, getArg } = require("./cdp-utils");
 // 通用 CDP 脚手架来自共享底座
-const { evalJSON, probePage, clickTab, pushBookBlock } = require("./rank-common");
+const { evalJSONB64, probePage, clickTab, pushBookBlock } = require("./rank-common");
 
 const CHANNELS = [
   { id: "male", label: "男频", tab: "男频", url: "https://www.ishugui.com/browse" },
@@ -84,7 +84,7 @@ function buildStoriesJS() {
 }
 
 function extractStories(port) {
-  const list = evalJSON(port, buildStoriesJS());
+  const list = evalJSONB64(port, buildStoriesJS());
   return Array.isArray(list) ? list : [];
 }
 

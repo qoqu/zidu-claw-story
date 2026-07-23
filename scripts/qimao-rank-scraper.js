@@ -20,7 +20,7 @@ const path = require("path");
 const { ab, sleep, scrollLoad, getArg } = require("./cdp-utils");
 // 通用 CDP 脚手架来自共享底座
 const {
-  evalJSON,
+  evalJSONB64,
   probePage,
   clickTab,
   clickTabRetry,
@@ -93,7 +93,7 @@ function extractBooksFromText(port) {
     "if(cur&&cur.title)books.push(cur);" +
     "return books" +
     "})())";
-  return evalJSON(port, js) || [];
+  return evalJSONB64(port, js) || [];
 }
 
 // ---------------------------------------------------------------------------

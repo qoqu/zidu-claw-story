@@ -97,6 +97,19 @@ function doQuery(projectDir, rest) {
     console.log(`\n## ${t}`);
     for (const e of byType[t]) console.log(`- ${e.content} ${e.tags.length ? '#' + e.tags.join(' #') : ''}（第${e.chapter || '?'}章）`);
   }
+  // ⑥②(b) 跨 references 确定性召回（BM25），与主召回互补，失败不阻断
+  const refQuery = kw || type || '';
+  if (refQuery) {
+    try {
+      const { indexReferences, bm25Search } = require('./retrieval');
+      const sections = indexReferences();
+      const hits = bm25Search(refQuery, sections, { top: 3 });
+      if (hits.length) {
+        console.log(`\n${BOLD}# 相关参考（跨 references 确定性召回，供任务书注入）${RESET}`);
+        for (const h of hits) console.log(`- 《${h.heading}》〔${h.file}〕${h.snippet ? '　' + h.snippet : ''}`);
+      }
+    } catch (e) { /* references 召回异常不影响主流程 */ }
+  }
   return 0;
 }
 

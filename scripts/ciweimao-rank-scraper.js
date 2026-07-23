@@ -19,7 +19,7 @@ const fs = require("fs");
 const path = require("path");
 const { ab, sleep, scrollLoad, getArg } = require("./cdp-utils");
 // 通用 CDP 脚手架来自共享底座
-const { evalJSON, probePage, extractBookUrls, pushBookBlock } = require("./rank-common");
+const { evalJSONB64, probePage, extractBookUrls, pushBookBlock } = require("./rank-common");
 
 const RANK_URL = "https://www.ciweimao.com/rank-index";
 
@@ -83,7 +83,7 @@ function extractAllRanks(port) {
     "if(curName&&curEntries.length)sections.push({name:curName,entries:curEntries});" +
     "return sections" +
     "})())";
-  return evalJSON(port, js) || [];
+  return evalJSONB64(port, js) || [];
 }
 
 // ---------------------------------------------------------------------------
