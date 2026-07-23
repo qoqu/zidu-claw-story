@@ -8,7 +8,7 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 你是统一入口。本 skill 把**网文写作全流程**（长篇/短篇/拆文/扫榜/去味/封面/导入/初始化）与**量化质检**（quality-gate 硬门禁）+ **追踪流水线**（tracking-updater / pipeline-gate）全部能力整合为 **一个 WB 原生 skill**，无外部依赖、无宿主私有契约。
 
 - 所有可执行脚本：`scripts/`（用 `node scripts/<name>.js` 调用）
-- 所有子流程知识库：`references/<sub>.md`（路由后读对应主文档 + 其下 craft KB）
+- 所有子流程知识库：`references/<sub>.md`（路由后读对应主文档 + 其下 craft KB）。开书/大纲/写作阶段可运行 `node scripts/genre-methodology.js route --stage <outline|character|writing> --len <long|short>` 确定性召回 `references/genre-*` 跨题材写法方法论并注入上下文（与 `references/genres/` 的按题材模板互补，由 `genre-library.js` 检索）。
 - 版本：`VERSION` 文件
 
 ## 〇、主动引导（零意图兜底）

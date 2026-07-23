@@ -127,6 +127,15 @@ function phaseFunctional(dir) {
   }
   if (glOut && !/修仙|题材|克苏鲁/.test(glOut)) fails.push('genre-library list 未列出题材');
 
+  // 5) genre-methodology route（确定性方法论检索，T3 增量）
+  let gmOut = '';
+  try {
+    gmOut = execFileSync(node, [path.join(dir, 'genre-methodology.js'), 'route', '--stage', 'outline', '--len', 'long'], { stdio: 'pipe', timeout: 12000 }).toString();
+  } catch (e) {
+    fails.push('genre-methodology route 失败：' + ((e.stderr || '').toString().trim().split('\n')[0] || e.message));
+  }
+  if (gmOut && !/genre-catalog/.test(gmOut)) fails.push('genre-methodology route 未召回 genre-catalog');
+
   // 5) outline-pacer 对一份示例细纲
   try {
     fs.writeFileSync(path.join(proj, '大纲', '细纲.md'),
