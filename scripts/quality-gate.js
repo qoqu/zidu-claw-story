@@ -151,6 +151,8 @@ function main() {
   };
 
   const blockers = [];
+  // 非阻断提示：子检查异常/降级时可见（不静默跳过），如 G 项 check-ai-patterns 崩溃
+  const advisories = [];
 
   if (!skipLint) {
     const script = path.join(scriptsDir, 'style-lint.js');
@@ -184,6 +186,8 @@ function main() {
       }
     } else {
       results.ai_patterns = { status: 'error', raw: r.output };
+      // G 修复：子检查异常不得静默跳过——转为 advisory 可见，避免 AI 味检查被偷偷放过
+      advisories.push('AI 散文痕迹检查异常（check-ai-patterns 未返回合法结果或被中断），结果不可用，请手动确认本章是否含 AI 味（报告 raw 段见原始输出）');
     }
   }
 
@@ -373,9 +377,11 @@ function main() {
       file: chapterFile,
       summary: {
         blockers: blockers.length,
+        advisories: advisories.length,
         checks_run: Object.values(results).filter(v => v !== null).length,
       },
       blockers,
+      advisories,
       details: results,
     };
     if (scoreResult) {
@@ -471,6 +477,11 @@ function main() {
   if (blockers.length > 0) {
     console.log('\n🚫 阻断项（必须修复）：');
     blockers.forEach((b, i) => console.log(`  ${i + 1}. ${b}`));
+  }
+
+  if (advisories.length > 0) {
+    console.log('\n⚠️ 提示（子检查异常/降级，不阻断但需关注）：');
+    advisories.forEach((a, i) => console.log(`  ${i + 1}. ${a}`));
   }
 
   if (scoreResult) {

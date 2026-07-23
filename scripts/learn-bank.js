@@ -26,7 +26,7 @@ const { readFile, readJson, writeJsonAtomic } = require('./fs-utils');
 const BANK_DIR = '记忆';
 const BANK_FILE = '写法沉淀.json';
 
-const RED = '\x1b[31m', GREEN = '\x1b[32m', RESET = '\x1b[0m', BOLD = '\x1b[1m';
+const RED = '\x1b[31m', GREEN = '\x1b[32m', RESET = '\x1b[0m', BOLD = '\x1b[1m', DIM = '\x1b[2m';
 const log = (m) => console.log(`${GREEN}[BANK]${RESET} ${m}`);
 const err = (m) => console.error(`${RED}[ERROR]${RESET} ${m}`);
 
@@ -61,6 +61,8 @@ function doAdd(projectDir, rest) {
   bank.entries.push(entry);
   saveBank(projectDir, bank);
   log(`已沉淀：${type} — ${content.slice(0, 40)}${content.length > 40 ? '…' : ''}`);
+  // B 弱交接修复：显式告诉用户这是"生产者"，写前用 query 召回才是"消费者"
+  console.log(`${DIM}· 已入记忆库；写下一章前运行 ${GREEN}node learn-bank.js ${projectDir} query${RESET}${DIM} 可召回并注入新章任务书（好写法越写越香、不糊）${RESET}`);
   return 0;
 }
 
@@ -110,6 +112,8 @@ function doQuery(projectDir, rest) {
       }
     } catch (e) { /* references 召回异常不影响主流程 */ }
   }
+  // B 弱交接修复：明确"消费者"动作——召回结果要粘进新章任务书才算完成交接
+  console.log(`\n${DIM}↑ 将上方「记忆召回」与「相关参考」粘贴进新章任务书（好写法越写越香、不糊）。${RESET}`);
   return 0;
 }
 

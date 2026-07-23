@@ -20,6 +20,7 @@
  *   node topic-to-book.js scaffold --genre 修仙 --title "我的书" [--dir 项目路径] [--gender 男频] [--platform 起点] [--decision 选题决策.md]
  *   node topic-to-book.js plan    --dir <项目目录> [--words 3000] [--chapter N]
  *   node topic-to-book.js review  --dir <项目目录>
+ *   node topic-to-book.js finish  --dir <项目目录> [--no-archive]   # 完结门禁（伏笔回收/设定缺口/事实矛盾/收尾章质量门 + 归档）
  */
 
 const fs = require('fs');
@@ -245,6 +246,25 @@ function cmdScaffold(argv) {
   const topTopic = (decision && decision.topics.length) ? decision.topics[0] : null;
   const outline = buildOutline(title, genre, gender, platform, topTopic);
   fs.writeFileSync(path.join(dir, '大纲', '大纲.md'), outline, 'utf-8');
+  // 5b) 首批 10 章细纲 stub（含 字数目标）：闭合 quality-gate getTargetWords 的字数目标交接缺口
+  //     —— 否则 scaffold 不产细纲时，quality-gate 永远回退默认 3000 且多处读取端读空（B 弱交接）。
+  //     long-write Phase 3 会按新版蓝图填充核心事件/钩子，stub 仅占位。
+  const STUB_CHAPTERS = 10;
+  for (let i = 1; i <= STUB_CHAPTERS; i++) {
+    const n = String(i).padStart(3, '0');
+    const stub = path.join(dir, '大纲', `细纲_第${n}章.md`);
+    if (!fs.existsSync(stub)) {
+      fs.writeFileSync(stub,
+        `## 细纲（第 ${i} 章）
+
+- 字数目标：3000
+- 状态：待补建（开书 Phase 3 由 long-write 填充核心事件 / 钩子 / 爽点 / 章尾钩子）
+
+> 本章细纲待补：写前先补建，不允许跳过细纲直接写作。
+`, 'utf-8');
+    }
+  }
+  info(`已生成首批 ${STUB_CHAPTERS} 章细纲 stub（含字数目标，quality-gate 可据此设章目标）`);
   // 6) 消费 选题决策.md：拷入项目根，供 long-write Phase1 / long-analyze Stage5 下游读取
   if (decisionFile) {
     try { fs.copyFileSync(decisionFile, path.join(dir, '选题决策.md')); }
@@ -260,15 +280,17 @@ function cmdScaffold(argv) {
   console.log('');
   console.log(`${BOLD}目录结构${RESET}`);
   ['设定', '正文', '大纲', '追踪', '记忆'].forEach((d) => info(`${path.basename(dir)}/${d}/`));
+  info(`${path.basename(dir)}/大纲/细纲_第NNN章.md（首批 ${STUB_CHAPTERS} 章 stub，含字数目标，待 Phase 3 填充核心事件/钩子）`);
   if (decisionFile) info(`${path.basename(dir)}/选题决策.md（已拷入，下游写作/拆文自动读取）`);
   console.log('');
-  console.log(`${BOLD}推荐写作流水线（每章循环）${RESET}`);
+  console.log(`${BOLD}推荐写作流水线（每章循环，严格对齐 SKILL.md「写章标准流程」）${RESET}`);
   info('1. 写 正文/第N章.md');
-  info('2. node tracking-updater.js <dir> after-chapter --chapter N --summary "..."');
-  info('3. node tracking-updater.js <dir> reading-power --chapter N --hook-type 冲突 --strength 强  (写入追读力.md)');
-  info('4. node quality-gate.js <dir> --chapter N');
-  info('5. node pacing-density.js <dir>    # 看追读曲线，水章预警');
-  info('6. node learn-bank.js <dir> add --type 爽点套路 --content "..."   # 沉淀好写法');
+  info('2. node tracking-updater.js <dir> after-chapter --chapter N --summary "..."   # 写上下文+字数');
+  info('3. node tracking-updater.js <dir> reading-power --chapter N --hook-type 冲突 --strength 强   # 喂追读密度');
+  info('4. node punct-precheck.js 正文/第N章.md && node check-degeneration.js 正文/第N章.md   # 去味/格式');
+  info('5. node quality-gate.js 正文/第N章.md <dir> [--genre 修仙]   # 唯一硬门禁，exit 0 才过');
+  info('6. node drift-guard.js 正文/第N章.md --project <dir>   # 文风护栏（advisory，不阻断）');
+  info('7. node learn-bank.js <dir> add --type 爽点套路 --content "..." && node pipeline-gate.js backup <dir> --chapter N   # 沉淀好写法 + 自动备份');
   return 0;
 }
 
@@ -445,21 +467,37 @@ function cmdReview(argv) {
   if (latest != null && latest < waterTh && !hasReal) warn('最新章追读密度偏低（结构性代理），建议下一章加强钩子/爽点，或回收一个长线伏笔拉回期待。');
   else if (latest == null) info('尚无追读数据，先按流水线写入 追踪/追读力.md。');
   else if (!hasReal) log('节奏稳定，保持更新频率即可（当前为结构性代理，可在平台后台手抄真实率让数据更准）。');
-  else info('全局视图：node dashboard.js <父目录> --html dashboard.html');
+  else   info('全局视图：node dashboard.js <父目录> --html dashboard.html');
   return 0;
+}
+
+// ===== finish：完结门禁（路由到 finish-book.js） =====
+function cmdFinish(argv) {
+  const dir = path.resolve(getOpt(argv, '--dir', '.'));
+  if (!fs.existsSync(dir)) { err(`项目目录不存在：${dir}`); return 1; }
+  log(`完结门禁（${path.basename(dir)}）`);
+  const args = [dir];
+  if (argv.includes('--no-archive')) args.push('--no-archive');
+  if (argv.includes('--json')) args.push('--json');
+  const r = run('finish-book.js', args, { timeout: 120000 });
+  // finish-book 已自带完整报告；直接透传其输出
+  if (r.out) process.stdout.write(r.out);
+  if (r.err) process.stderr.write(r.err);
+  return r.code;
 }
 
 function main() {
   const argv = process.argv.slice(2);
   const sub = argv[0];
-  const map = { scan: cmdScan, match: cmdMatch, scaffold: cmdScaffold, plan: cmdPlan, review: cmdReview };
+  const map = { scan: cmdScan, match: cmdMatch, scaffold: cmdScaffold, plan: cmdPlan, review: cmdReview, finish: cmdFinish };
   if (!sub || !map[sub]) {
-    console.error(`${RED}用法：${RESET}node topic-to-book.js <scan|match|scaffold|plan|review> [选项]`);
+    console.error(`${RED}用法：${RESET}node topic-to-book.js <scan|match|scaffold|plan|review|finish> [选项]`);
     console.error('  scan    [--from-rank [--refresh] [--rank-dir D]] 选题情报');
     console.error('  match   --topic "..." 选题匹配');
     console.error('  scaffold --genre X --title Y [--dir D]');
     console.error('  plan    --dir D [--words 3000]');
     console.error('  review  --dir D');
+    console.error('  finish  --dir D [--no-archive]  完结门禁');
     process.exit(1);
   }
   try { process.exit(map[sub](argv.slice(1))); }

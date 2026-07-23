@@ -4,7 +4,7 @@
 /**
  * selftest.js — zidu-claw-story 自测套件 / 回归护栏（v1.5.0 新增）
  *
- * 目的：48 个脚本靠手动冒烟容易改坏一个带崩一片。本脚本给整包做冒烟：
+ * 目的：50 个脚本靠手动冒烟容易改坏一个带崩一片。本脚本给整包做冒烟：
  *   阶段1 语法检查   node --check 每个脚本（零副作用、最快）
  *   阶段2 启动冒烟   非网络/非浏览器脚本跑 `--help`（或空参），断言"不崩"
  *                    判过标准：exit 0/1/2 且首几行无未捕获异常堆栈
@@ -198,6 +198,22 @@ function phaseFunctional(dir) {
   }
   if (stackIn(qgOut)) fails.push('quality-gate 崩溃：' + qgOut.trim().split('\n')[0]);
   else if (qgOut && !/status|checks|score|block|pass|gate/i.test(qgOut)) fails.push('quality-gate 未产出结构化输出');
+
+  // 9) finish-book 完结门禁冒烟（D：证明全书级编排链路可用，子检查降级不崩门禁）
+  let fbOut = '';
+  try {
+    fbOut = execFileSync(node, [path.join(dir, 'finish-book.js'), proj, '--json', '--no-archive'],
+      { stdio: 'pipe', timeout: 120000 }).toString();
+  } catch (e) {
+    fbOut = ((e.stdout || '') + (e.stderr || '')).toString();
+  }
+  if (stackIn(fbOut)) fails.push('finish-book 崩溃：' + fbOut.trim().split('\n')[0]);
+  else if (fbOut) {
+    try {
+      const fb = JSON.parse(fbOut);
+      if (!fb.status || !Array.isArray(fb.checks)) fails.push('finish-book 未产出结构化输出');
+    } catch { fails.push('finish-book 输出非合法 JSON'); }
+  }
 
   try { fs.rmSync(tmp, { recursive: true, force: true }); } catch { /* ignore */ }
   return fails;
