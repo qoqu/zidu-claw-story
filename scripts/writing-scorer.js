@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { readJson } = require('./fs-utils');
 
 const USAGE = `Usage: node writing-scorer.js <chapter-file> [project-dir] [--genre NAME] [--json] [--strict] [--relaxed]
 
@@ -26,7 +27,7 @@ function loadTemplate(genre) {
   if (!fs.existsSync(filePath)) {
     return null;
   }
-  return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  return readJson(filePath);
 }
 
 function getGenreFromProject(projectDir) {

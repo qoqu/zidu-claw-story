@@ -4,7 +4,7 @@
 /**
  * selftest.js — zidu-claw-story 自测套件 / 回归护栏（v1.5.0 新增）
  *
- * 目的：40+ 脚本靠手动冒烟容易改坏一个带崩一串。本脚本给整包做冒烟：
+ * 目的：48 个脚本靠手动冒烟容易改坏一个带崩一片。本脚本给整包做冒烟：
  *   阶段1 语法检查   node --check 每个脚本（零副作用、最快）
  *   阶段2 启动冒烟   非网络/非浏览器脚本跑 `--help`（或空参），断言"不崩"
  *                    判过标准：exit 0/1/2 且首几行无未捕获异常堆栈
@@ -145,6 +145,45 @@ function phaseFunctional(dir) {
   } catch (e) {
     fails.push('outline-pacer 失败：' + ((e.stderr || e.stdout || '').toString().trim().split('\n')[0] || e.message));
   }
+
+  // 准备最小章节文件，供 doctor / writing-scorer / quality-gate 冒烟
+  fs.mkdirSync(path.join(proj, '正文'), { recursive: true });
+  const chFile = path.join(proj, '正文', '第1章.md');
+  fs.writeFileSync(chFile,
+    '第一章 开局\n\n林默推开沉重的铁门，冷风灌进领口。他没想到，这扇门后藏着整个家族失踪的真相。\n\n（占位测试正文，仅用于自测）\n',
+    'utf-8');
+
+  // 6) writing-scorer 冒烟（离线生成评分任务，不调 LLM；修复前 default.json 缺失会静默 exit 2）
+  let wsOut = '';
+  try {
+    wsOut = execFileSync(node, [path.join(dir, 'writing-scorer.js'), chFile, proj, '--json'],
+      { stdio: 'pipe', timeout: 15000 }).toString();
+  } catch (e) {
+    wsOut = ((e.stdout || '') + (e.stderr || '')).toString();
+  }
+  if (stackIn(wsOut)) fails.push('writing-scorer 崩溃：' + wsOut.trim().split('\n')[0]);
+  else if (!/status|genre template not found/i.test(wsOut)) fails.push('writing-scorer 未产出预期输出');
+
+  // 7) doctor 冒烟（--no-subchecks 纯结构自检；缺失目录会 level2，但不应崩溃）
+  let docOut = '';
+  try {
+    docOut = execFileSync(node, [path.join(dir, 'doctor.js'), proj, '--no-subchecks'],
+      { stdio: 'pipe', timeout: 15000 }).toString();
+  } catch (e) {
+    docOut = ((e.stdout || '') + (e.stderr || '')).toString();
+  }
+  if (stackIn(docOut)) fails.push('doctor 崩溃：' + docOut.trim().split('\n')[0]);
+
+  // 8) quality-gate 端到端冒烟（B4：证明 11 子检查 spawn + 聚合链路可用，单脚本损坏不会崩门禁）
+  let qgOut = '';
+  try {
+    qgOut = execFileSync(node, [path.join(dir, 'quality-gate.js'), chFile, proj, '--json', '--no-score', '--skip-pacing'],
+      { stdio: 'pipe', timeout: 60000 }).toString();
+  } catch (e) {
+    qgOut = ((e.stdout || '') + (e.stderr || '')).toString();
+  }
+  if (stackIn(qgOut)) fails.push('quality-gate 崩溃：' + qgOut.trim().split('\n')[0]);
+  else if (qgOut && !/status|checks|score|block|pass|gate/i.test(qgOut)) fails.push('quality-gate 未产出结构化输出');
 
   try { fs.rmSync(tmp, { recursive: true, force: true }); } catch { /* ignore */ }
   return fails;

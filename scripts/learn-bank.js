@@ -21,6 +21,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { readFile, readJson, writeJsonAtomic } = require('./fs-utils');
 
 const BANK_DIR = '记忆';
 const BANK_FILE = '写法沉淀.json';
@@ -29,17 +30,14 @@ const RED = '\x1b[31m', GREEN = '\x1b[32m', RESET = '\x1b[0m', BOLD = '\x1b[1m';
 const log = (m) => console.log(`${GREEN}[BANK]${RESET} ${m}`);
 const err = (m) => console.error(`${RED}[ERROR]${RESET} ${m}`);
 
-function readFile(p) { try { return fs.readFileSync(p, 'utf-8'); } catch { return null; } }
 function bankPath(projectDir) { return path.join(projectDir, BANK_DIR, BANK_FILE); }
 function loadBank(projectDir) {
-  const c = readFile(bankPath(projectDir));
-  if (!c) return { schema: 'zidu-learn-bank/v1', entries: [] };
-  try { const o = JSON.parse(c); if (!o.entries) o.entries = []; return o; }
-  catch { return { schema: 'zidu-learn-bank/v1', entries: [] }; }
+  const o = readJson(bankPath(projectDir));
+  if (!o || !o.entries) return { schema: 'zidu-learn-bank/v1', entries: [] };
+  return o;
 }
 function saveBank(projectDir, bank) {
-  fs.mkdirSync(path.join(projectDir, BANK_DIR), { recursive: true });
-  fs.writeFileSync(bankPath(projectDir), JSON.stringify(bank, null, 2), 'utf-8');
+  writeJsonAtomic(bankPath(projectDir), bank);
 }
 let _seq = 0;
 function genId() { return 'LB' + Date.now().toString(36) + (_seq++).toString(36); }

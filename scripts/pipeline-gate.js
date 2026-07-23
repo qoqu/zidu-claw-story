@@ -35,6 +35,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
+const { readJson, writeJsonAtomic } = require('./fs-utils');
 
 const PIPELINE_DIR = '.pipeline';
 const STATE_FILE = 'state.json';
@@ -56,8 +57,6 @@ const log = (m) => console.log(`${GREEN}[GATE]${RESET} ${m}`);
 const warn = (m) => console.log(`${YELLOW}[WARN]${RESET} ${m}`);
 const err = (m) => console.error(`${RED}[BLOCK]${RESET} ${m}`);
 
-function readJson(p) { try { return JSON.parse(fs.readFileSync(p, 'utf-8')); } catch { return null; } }
-function writeJson(p, o) { fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, JSON.stringify(o, null, 2), 'utf-8'); }
 function fileExists(p) { return fs.existsSync(p); }
 
 function pipelineDir(projectDir) { return path.join(projectDir, PIPELINE_DIR); }
@@ -78,7 +77,7 @@ function loadState(projectDir) {
   if (!s.steps) s.steps = {};
   return s;
 }
-function saveState(projectDir, state) { writeJson(statePath(projectDir), state); }
+function saveState(projectDir, state) { writeJsonAtomic(statePath(projectDir), state); }
 
 // 从 追踪/上下文.md 解析最新章节
 function getContextChapter(projectDir) {
@@ -113,7 +112,7 @@ function loadLedger(projectDir) {
   if (!l.write) l.write = {};
   return l;
 }
-function saveLedger(projectDir, ledger) { writeJson(ledgerPath(projectDir), ledger); }
+function saveLedger(projectDir, ledger) { writeJsonAtomic(ledgerPath(projectDir), ledger); }
 function chKey(n) { return `chapter_${String(n).padStart(3, '0')}`; }
 function sha256File(p) {
   try { return crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex'); } catch { return null; }

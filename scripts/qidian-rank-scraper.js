@@ -29,6 +29,8 @@
 const fs = require("fs");
 const https = require("https");
 const path = require("path");
+// 起点默认走 m.qidian.com SSR（pageContext JSON），不依赖 DOM 助手；
+// cdp-utils 仅用于 --mode cdp 回退路径，故不引入 rank-common（通用 CDP 脚手架）。
 const { ab, sleep, evalJSON, scrollLoad, getArg } = require("./cdp-utils");
 
 const PC_BASE_URL = "https://www.qidian.com/rank";

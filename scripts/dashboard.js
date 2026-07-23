@@ -20,6 +20,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { readFile } = require('./fs-utils');
 
 const RED = '\x1b[31m', GREEN = '\x1b[32m', YELLOW = '\x1b[33m', RESET = '\x1b[0m', BOLD = '\x1b[1m', DIM = '\x1b[2m';
 const err = (m) => console.error(`${RED}[ERROR]${RESET} ${m}`);
@@ -29,7 +30,6 @@ try {
   ({ parseReadingPower, densityScore } = require('./pacing-density.js'));
 } catch (e) { parseReadingPower = null; densityScore = null; }
 
-function readFile(p) { try { return fs.readFileSync(p, 'utf-8'); } catch { return null; } }
 function isDir(p) { try { return fs.statSync(p).isDirectory(); } catch { return false; } }
 function mtimeMs(p) { try { return fs.statSync(p).mtimeMs; } catch { return 0; } }
 function countWords(text) { return text.replace(/[#*_`\[\](){}|\\~^>!-]/g, '').replace(/\s+/g, '').length; }

@@ -22,13 +22,13 @@
 
 const fs = require('fs');
 const path = require('path');
+const { readFile } = require('./fs-utils');
 
 const RED = '\x1b[31m', GREEN = '\x1b[32m', YELLOW = '\x1b[33m', RESET = '\x1b[0m', BOLD = '\x1b[1m';
 const ok = (m) => console.log(`${GREEN}✓${RESET} ${m}`);
 const warn = (m) => console.log(`${YELLOW}⚠${RESET} ${m}`);
 const err = (m) => console.error(`${RED}✗${RESET} ${m}`);
 
-function readFile(p) { try { return fs.readFileSync(p, 'utf-8'); } catch { return null; } }
 function exists(p) { return fs.existsSync(p); }
 function isDir(p) { try { return fs.statSync(p).isDirectory(); } catch { return false; } }
 

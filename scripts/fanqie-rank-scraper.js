@@ -32,7 +32,11 @@ const DETAIL_CHUNK = 5;
 // 页面提取
 // ---------------------------------------------------------------------------
 
-/** 连通性 + 页面就绪自检 */
+/**
+ * 连通性 + 页面就绪自检（番茄专用，有意分歧 vs rank-common.probePage）。
+ * 番茄列表页依赖 window.__INITIAL_STATE__ 注入，通用版只查 host+body 长度会漏判
+ * 「页已加载但 state 未注入」的半成品态，故这里额外确认 hasState。
+ */
 function probePage(port) {
   return evalJSON(
     port,

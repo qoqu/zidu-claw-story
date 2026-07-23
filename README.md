@@ -4,7 +4,7 @@
 
 把**网文写作全流程**（长篇/短篇/拆文/扫榜/去味/封面/导入/初始化）与**量化质检**（quality-gate 硬门禁）+ **追踪流水线**（tracking-updater / pipeline-gate）整合为**一个技能包**，无外部依赖、无宿主私有契约。
 
-当前版本：**1.7.12**（见 `VERSION`）。
+当前版本：**1.7.13**（见 `VERSION`）。
 
 ## ✨ 特性
 
@@ -26,7 +26,7 @@
 - **多平台发布物料**：章推/书评/求追读文案，按起点/番茄/微博/小红书/知乎/微信/头条/B站/抖音 平台语气模板化生成
 - **发布排期 / Runbook**：promo-pack 的 calendar / runbook 按平台+节奏生成逐章发布命令与检查清单，补齐「写→发」最后一公里
 - **选题→成书闭环**：topic-to-book 把扫榜/题材库/日更配速/追读复盘串成一条流水线，从选题、匹配、开书骨架到每日配速与追读预警一气呵成
-- **自测套件**：selftest 给 44 脚本做语法/启动/功能三层冒烟，改一处不崩一片
+- **自测套件**：selftest 给 48 脚本做语法/启动/功能三层冒烟，改一处不崩一片
 - **选题情报闭环**：rank-dispatcher 聚合 7 平台榜单为 rank-index.json，topic-to-book scan --from-rank 读缓存算「蓝海指数」（热榜命中热度 ÷ 题材竞争度）；加 --refresh 可一键刷新实时热榜再分析（失败回退缓存），动笔前知道写什么能火
 - **排行榜统一底座**：rank-dispatcher 统一调度 7 个平台 rank-scraper（失败隔离），让沉睡的爬虫数据变成选题情报源
 - **追读回落门禁**：quality-gate 新增 pacing 维度（advisory），写完一章若最新章追读密度低于阈值即预警，防默默掉追读
@@ -48,9 +48,9 @@ zidu-claw-story/
 ├── LICENSE               # MIT
 ├── docs/
 │   ├── install.md       # 多宿主安装与部署
-│   ├── scripts.md       # 44 个脚本命令参考
+│   ├── scripts.md       # 48 个脚本命令参考
 │   └── references.md    # 知识库（references/）索引
-├── scripts/              # 44 个 Node 脚本（质检/去味/追踪/爬虫/CDP/体检/记忆/观/扩/闭环/自测/数据驱动）
+├── scripts/              # 48 个 Node 脚本（质检/去味/追踪/爬虫/CDP/体检/记忆/观/扩/闭环/自测/数据驱动）
 └── references/          # 243 篇子流程知识库（206 篇扁平 + genres/ 37 题材模板）
 ```
 
@@ -194,7 +194,7 @@ node scripts/promo-pack.js book    <项目目录> --platform 小红书 [--title 
 | 文档 | 内容 |
 |---|---|
 | [docs/install.md](docs/install.md) | WB / OpenClaw / Hermes 安装与部署 |
-| [docs/scripts.md](docs/scripts.md) | 44 个脚本分类与命令参考 |
+| [docs/scripts.md](docs/scripts.md) | 48 个脚本分类与命令参考 |
 | [docs/references.md](docs/references.md) | references/ 知识库主题索引 |
 
 ## ⚙️ 环境要求

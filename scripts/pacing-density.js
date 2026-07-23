@@ -25,13 +25,12 @@
 
 const fs = require('fs');
 const path = require('path');
+const { readFile } = require('./fs-utils');
 
 const RED = '\x1b[31m', GREEN = '\x1b[32m', YELLOW = '\x1b[33m', RESET = '\x1b[0m', BOLD = '\x1b[1m', DIM = '\x1b[2m';
 const log = (m) => console.log(`${GREEN}[PACING]${RESET} ${m}`);
 const err = (m) => console.error(`${RED}[ERROR]${RESET} ${m}`);
 const warn = (m) => console.log(`${YELLOW}[WARN]${RESET} ${m}`);
-
-function readFile(p) { try { return fs.readFileSync(p, 'utf-8'); } catch { return null; } }
 
 // ===== 解析 追踪/追读力.md =====
 function parseReadingPower(projectDir) {

@@ -10,6 +10,19 @@
 
 const { execSync } = require("child_process");
 
+// agent-browser 缺失告警只打印一次，避免每页调用刷屏
+let _abWarned = false;
+function warnAgentBrowserMissing(detail) {
+  if (_abWarned) return;
+  _abWarned = true;
+  process.stderr.write(
+    "\n[cdp-utils] ⚠ agent-browser CLI 未安装或不可用" +
+      (detail ? "（" + detail + "）" : "") +
+      "：排行榜 / 扫描将静默降级（输出可能为空或退化为占位）。\n" +
+      "  请先部署 agent-browser（或检查 PATH），否则依赖 CDP 的采集无法真正工作。\n"
+  );
+}
+
 // ---------------------------------------------------------------------------
 // agent-browser 工具函数
 // ---------------------------------------------------------------------------
@@ -29,6 +42,13 @@ function ab(port, ...args) {
       stdio: ["pipe", "pipe", "pipe"],
     }).trim();
   } catch (e) {
+    // agent-browser 未安装 / 不在 PATH → 友好告警一次，仍优雅降级返回 ""
+    const msg = String((e && (e.message || e.stderr)) || "");
+    const missing = e && e.code === "ENOENT";
+    const notRecognized = /not recognized|command not found|no such file|'agent-browser' is not recognized/i.test(msg);
+    if (missing || notRecognized) {
+      warnAgentBrowserMissing(missing ? "ENOENT：命令未找到" : "命令未被识别");
+    }
     return e.stdout?.trim() || "";
   }
 }
