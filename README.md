@@ -1,4 +1,4 @@
-﻿# zidu-claw-story
+# zidu-claw-story
 
 > AI 网文写作完整工具箱（单包 · WorkBuddy 原生 · 跨宿主可移植）
 

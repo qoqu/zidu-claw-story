@@ -1,4 +1,4 @@
-﻿---
+---
 name: zidu-claw-story-setup
 version: 1.7.11
 description: "zidu-claw-story 单包技能的基础设施部署。将 7 个可选 subagent（story-architect / story-explorer / story-researcher / chapter-extractor / character-designer / consistency-checker / narrative-writer）部署到 Claude Code / OpenCode / Codex / OpenClaw / 通用 Agent 项目的对应 agents 目录；说明 subagent 如何解析技能内置 references。触发方式：/story-setup、「准备写书」「帮我搭一下环境」「配置写作项目」。"

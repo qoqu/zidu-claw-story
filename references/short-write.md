@@ -1,4 +1,4 @@
-﻿---
+---
 name: story-short-write
 version: 1.7.11
 description: "短篇网文写作。辅助短篇小说创作，从构思到成稿，聚焦情绪拉扯与节奏把控。触发方式：/story-short-write、/写短篇、「帮我写一篇短篇」「写个盐言故事」。"
