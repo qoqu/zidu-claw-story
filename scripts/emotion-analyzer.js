@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const SP = require('./satisfaction-points.js');
 
 const USAGE = `Usage: node emotion-analyzer.js <chapter-file> [--json]
 
@@ -26,7 +27,7 @@ const EMOTION_KEYWORDS = {
   sadness: { words: ['悲伤', '难过', '伤心', '痛苦', '心痛', '泪', '哭', '泣', '哽咽', '悲痛', '哀伤', '凄凉', '心酸', '苦涩', '黯然'], weight: 3 },
   joy: { words: ['高兴', '开心', '快乐', '喜悦', '兴奋', '激动', '欣喜', '爽', '痛快', '畅快', '大快人心', '心花怒放', '喜出望外', '欢呼', '雀跃'], weight: 3 },
   surprise: { words: ['震惊', '惊讶', '吃惊', '目瞪口呆', '瞠目结舌', '大吃一惊', '意想不到', '出乎意料', '没想到', '不敢相信', '难以置信', '惊呆', '傻眼'], weight: 4 },
-  satisfaction: { words: ['打脸', '反杀', '逆袭', '翻身', '扬眉吐气', '一鸣惊人', '众人震惊', '全场沸腾', '掌声雷动', '刮目相看', '跪下', '求饶', '后悔', '后悔莫及', '肠子悔青'], weight: 5 },
+  satisfaction: { words: SP.SATISFACTION_WORDS, weight: 5 },
   calm: { words: ['平静', '安静', '宁静', '沉默', '淡然', '从容', '淡定', '冷静', '镇定', '不动声色', '面不改色'], weight: -1 },
   tension_markers: ['！', '？', '……', '！！', '？？', '！！！'],
 };
@@ -110,15 +111,19 @@ function detectFlatRegions(paragraphs) {
   return warnings;
 }
 
-function detectSatisfactionPoints(paragraphs) {
+function detectSatisfactionPoints(paragraphs, text) {
+  // 共用统一词表（satisfaction-points.js）识别爽点，避免与 satisfaction-meter 双词表漂移
+  const shared = SP.detectSatisfactionPoints(text);
+  const byPara = new Map(shared.map(p => [p.paragraph, p]));
   const points = [];
   for (let i = 0; i < paragraphs.length; i++) {
-    if (paragraphs[i].dominant === 'satisfaction' || paragraphs[i].intensity >= 7) {
+    const sp = byPara.get(i + 1);
+    if (sp || paragraphs[i].intensity >= 7) {
       points.push({
         paragraph: i + 1,
         intensity: paragraphs[i].intensity,
         emotion: paragraphs[i].dominant,
-        position_pct: Math.round((i / paragraphs.length) * 100),
+        position_pct: sp ? sp.position_pct : Math.round((i / paragraphs.length) * 100),
       });
     }
   }
@@ -177,7 +182,7 @@ function main() {
   const text = fs.readFileSync(chapterFile, 'utf-8');
   const paragraphs = analyzeParagraphs(text);
   const flatWarnings = detectFlatRegions(paragraphs);
-  const satisfactionPoints = detectSatisfactionPoints(paragraphs);
+  const satisfactionPoints = detectSatisfactionPoints(paragraphs, text);
   const peak = findPeak(paragraphs);
 
   const avgIntensity = paragraphs.length > 0

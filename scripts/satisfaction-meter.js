@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const SP = require('./satisfaction-points.js');
 
 const USAGE = `Usage: node satisfaction-meter.js <chapter-file> [--json]
 
@@ -21,7 +22,7 @@ Options:
 Exit code 0 = pass, 2 = low density warning`;
 
 const SATISFACTION_SIGNALS = {
-  strong: { words: ['打脸', '反杀', '逆袭', '翻身', '扬眉吐气', '一鸣惊人', '全场沸腾', '掌声雷动', '刮目相看', '跪下', '求饶', '后悔莫及', '肠子悔青', '众人震惊', '目瞪口呆', '瞠目结舌', '大快人心', '痛快', '爽', '太帅了', '牛逼', '厉害了'], weight: 5 },
+  strong: { words: SP.SATISFACTION_WORDS, weight: 5 },
   medium: { words: ['惊讶', '吃惊', '没想到', '出乎意料', '意想不到', '不敢相信', '难以置信', '惊呆', '傻眼', '愣住', '震惊', '意外', '突破', '成功', '赢了', '胜利', '冠军', '第一', '最强', '天才'], weight: 3 },
   mild: { words: ['认可', '赞同', '点头', '微笑', '满意', '放心', '安心', '欣慰', '骄傲', '自豪', '佩服', '赞叹', '夸赞', '表扬', '奖励', '提拔', '升级', '进步'], weight: 2 },
 };
