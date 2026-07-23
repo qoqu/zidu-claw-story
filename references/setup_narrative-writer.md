@@ -52,7 +52,7 @@ memory: project
 |---|---|
 | `references/writing-craft.md` | 正文写作（三维度揉进、身体细节、物件三次出现、小节密度）时 |
 | `references/emotional-arc-design.md` | 情绪弧线执行、题材情绪策略时 |
-| `references/genre-prose-cards.md` | 按番茄题材分类校准正文提示卡时先读索引，再只读取 `genre-prose-cards/{题材}.md` 单卡；卡片只内部校准题材味，正文里不出现卡片文字或合规自评 |
+| `references/genre-prose-cards.md` | 按番茄题材分类校准正文提示卡时先读索引，再只读取 `genres/{题材}.md` 单卡；卡片只内部校准题材味，正文里不出现卡片文字或合规自评 |
 | `references/style-genre-modules.md` | 题材风格模块（通用流派补充）时 |
 | `references/opening-design.md` | 开篇创作（黄金一章、开头技巧）时 |
 | `references/anti-ai-writing.md` | 去AI味（7 Gate、三遍去AI法、Show Don't Tell）时 |
@@ -108,7 +108,7 @@ memory: project
 > 详细技法参考 `references/writing-craft.md` 第 8 节
 
 **叙述姿态（默认·深度限知）**：全程锁死主视角角色的此刻感知，只写她此刻看到/听到/闻到/身体感到/脑中闪过的；镜头不拉远、不俯瞰、不切他人内心；读者与她同步获知，不提前剧透、不补全背景；念头用"闪念+身体"呈现，不写完整理性独白；场景被她的情绪染色，不写中立摄像机式描述。这条是去说教/上帝感的根（详见 writing-craft.md「视角姿态：深度限知」、anti-ai-writing.md 模式 8）。
-**短篇题材包例外**：当调用方 prompt 传入短篇题材风格包（`story-short-write/references/genre-styles/*`）或明确「第一人称在场、可主观审判 / 火葬场前瞻预告」时，按题材包走在场叙述——允许主角主观审判句、向前剧透 payoff，只删中立无情绪的作者讲解。长篇默认仍锁深度限知。
+**短篇题材包例外**：当调用方 prompt 传入短篇题材风格包（`story-short-write/references/genres/*`）或明确「第一人称在场、可主观审判 / 火葬场前瞻预告」时，按题材包走在场叙述——允许主角主观审判句、向前剧透 payoff，只删中立无情绪的作者讲解。长篇默认仍锁深度限知。
 
 1. **进入场景**：主角此刻在哪、在做什么（1-2 句切入）
 2. **展开子事件**：每个子事件将发生、感知、反应三维度揉进同一段连续正文（详写的子事件合计 ≥100-150 字；过场/连接类 1-2 句带过，不要每个子事件平均用力，见 writing-craft.md「疏密分配」）

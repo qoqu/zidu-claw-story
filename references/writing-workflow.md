@@ -8,9 +8,9 @@
 
 ### 开始前先加载 references（逐项检查，不能跳过）
 
-- 定题材腔调/招式 → 加载 `genre-styles/{题材}.md` + `short-craft.md` ✅/❌
+- 定题材腔调/招式 → 加载 `genres/{题材}.md` + `short-craft.md` ✅/❌
 - 写反派/揭露方式 → 加载 `villain-and-reveal.md` ✅/❌
-- 写大纲 → 题材包 `genre-styles/{题材}.md` 的节奏骨架 +（冷门题材）`genre-writing-formulas.md` 速查表 ✅/❌
+- 写大纲 → 题材包 `genres/{题材}.md` 的节奏骨架 +（冷门题材）`genre-writing-formulas.md` 速查表 ✅/❌
 - 反转信息差验证 → 需加载 `reversal-toolkit.md` ✅/❌
 - 伏笔回查 → 见下方「伏笔回查清单」 ✅/❌
 - 如某项不适用（如无反派），标注原因后可跳过
@@ -54,7 +54,7 @@
 
 - 必读：`short-format.md`（正文格式）+ `short-craft.md`（通用底座）
 - 必读：`short-deslop.md`（写作时自检 AI 腔）
-- 按题材加载 1 个：`genre-styles/{题材}.md`（核心 10 题材）或 `genre-writing-formulas.md`（冷门题材速查表）
+- 按题材加载 1 个：`genres/{题材}.md`（核心 10 题材）或 `genre-writing-formulas.md`（冷门题材速查表）
 - 按需加载：`villain-and-reveal.md` / `emotional-methods.md`
 
 ### 工作目录结构

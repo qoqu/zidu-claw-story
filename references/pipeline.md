@@ -45,6 +45,15 @@ node scripts/tracking-updater.js "C:/path/项目" set-env --key "季节" --value
 node scripts/tracking-updater.js "C:/path/项目" add-repeat --content "他的心跳如鼓" --location "第5、8、12章" --count 3 --alt "胸腔里闷闷地撞"
 node scripts/tracking-updater.js "C:/path/项目" set-material --name "盘缠" --status "余五十两" --chapter 12
 
+# 4) 写前/写后辅助闭环（净化 + 题材漂移自检 + 记忆交接）
+#    a) 净化：清理无功能省略号 / 破折号 / 双连字符（写后立刻跑，qa 前后均可）
+node scripts/punct-precheck.js "C:/path/项目/正文/第012章.md" --quote-mode keep
+#    b) 题材漂移自检（advisory，不阻断）：防文风 / 题材漂移
+node scripts/drift-guard.js "C:/path/项目/正文/第012章.md" --project "C:/path/项目"
+#    c) 记忆交接（见 SKILL.md「learn-bank 纪律」）：写前 query 召回上章记忆注入任务书；写后 add 沉淀本章
+node scripts/learn-bank.js "C:/path/项目" query --chapter 12
+node scripts/learn-bank.js "C:/path/项目" add --chapter 12 --text "第12章核心：主角拜师，伏笔断剑封印松动"
+
 # 5) 闸门：标记 track 完成（要求 追踪/上下文.md 存在）
 node scripts/pipeline-gate.js gate post track "C:/path/项目" --chapter 12
 
@@ -53,6 +62,8 @@ node scripts/pipeline-gate.js status "C:/path/项目"
 ```
 
 > **Windows 路径注意**：用 WorkBuddy 的 Bash 调 Windows `node.exe` 时，路径必须用 `C:/...` 或 `C:\...`（不要用 `/c/...`，node.exe 不认 Git Bash 前缀）。
+>
+> **写章方法论 canonical**：本段是「追踪 + 闸门」工具集的脚本用法速查。写一章的完整 6 步方法论（写前准备 → 写正文 → 净化 → 硬门禁 → 追踪 → 闸门）以 **SKILL.md「五、写章标准流程」为唯一 canonical**，本文档与之互补、不冲突。
 
 ---
 

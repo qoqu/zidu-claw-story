@@ -12,6 +12,8 @@ description: "短篇网文写作。辅助短篇小说创作，从构思到成稿
 ---
 
 > Agent 兼容性：检查专业 agent 是否可用时，按 `.claude/agents/{agent}.md` → `.opencode/agents/{agent}.md` → `.codex/agents/{agent}.toml` 的顺序查找。Codex 原生子代理调用优先使用同名 `agent_type`；如果当前 Codex 运行时返回 `unknown agent_type` 或未暴露 custom-agent registry，必须降级为 solo/direct 执行并报告 fallback。Claude/OpenCode 兼容面保留 `subagent_type`。
+>
+> **⚠️ WB / 无 agent 环境降级**：WorkBuddy 原生包不捆绑 story-* agent、无 `/story-*` 命令注册表；上述 `.claude/agents/` 等目录在 WB 下不存在，检查找不到时直接 solo/direct 执行（主线程按本文流程走 Read/Grep），能力不缺失、不阻塞写作。本文 `story-architect` / `character-designer` / `narrative-writer` / `consistency-checker` 等 agent 与 `/story-*` 命令均为**主机增强项**。完整适配规则见 SKILL.md「四、WB 适配」。
 
 ## 执行规则
 
@@ -33,8 +35,8 @@ description: "短篇网文写作。辅助短篇小说创作，从构思到成稿
 
 除了上面的执行规则，构思和写作时遵循：
 
-- **从验证过的模式出发**：有对标书就先拆解，没有就从 `genre-styles/{题材}.md`（核心 10 题材）或 `genre-writing-formulas.md`（冷门题材）找对应的短篇剧情模式
-- **定方向就换风格**：题材方向一旦确定（如追妻火葬场），立刻加载 `references/genre-styles/{题材}.md`——正文的腔调、开篇、钩子、情绪烈度、对话金句、招式、收尾全部切到该题材。核心 10 题材（追妻火葬场 / 世情打脸 / 复仇打脸 / 总裁豪门 / 宅斗宫斗 / 民俗怪谈 / 悬疑 / 甜宠 / 双男主 / 沙雕脑洞）有专属风格包，其中追妻含 现代/古代/民国 时代变体与 小三文学/死人文学 流派分支；冷门题材用 `genre-writing-formulas.md` 的结构骨架兜底，腔调仍按 `short-craft.md` 通用底座
+- **从验证过的模式出发**：有对标书就先拆解，没有就从 `genres/{题材}.md`（核心 10 题材）或 `genre-writing-formulas.md`（冷门题材）找对应的短篇剧情模式
+- **定方向就换风格**：题材方向一旦确定（如追妻火葬场），立刻加载 `references/genres/{题材}.md`——正文的腔调、开篇、钩子、情绪烈度、对话金句、招式、收尾全部切到该题材。核心 10 题材（追妻火葬场 / 世情打脸 / 复仇打脸 / 总裁豪门 / 宅斗宫斗 / 民俗怪谈 / 悬疑 / 甜宠 / 双男主 / 沙雕脑洞）有专属风格包，其中追妻含 现代/古代/民国 时代变体与 小三文学/死人文学 流派分支；冷门题材用 `genre-writing-formulas.md` 的结构骨架兜底，腔调仍按 `short-craft.md` 通用底座
 - **定平台基调 + 打磨导语 + 卡付费点**：投稿前先按平台（知乎/小程序/番茄）定基调，正文视角、矛盾烈度、章末落点随之切换；导语单独当门面打磨（导语不行，正文再好也被编辑一眼刷掉）；付费点卡在章末卡脖子断点上。见 `references/submission-craft.md`
 - **只加载必需信息**：写每节前明确目标情绪和要用的技法，答不出就先回读参考
 
@@ -92,22 +94,22 @@ description: "短篇网文写作。辅助短篇小说创作，从构思到成稿
 如果工作目录下存在 `对标/` 或项目根存在 `拆文库/`，或用户提到参考小说：
 
 1. 按上述顺序查找 `拆文报告.md`、`情节节点.md`、`写作手法.md`、`_meta.json`
-2. **读 `_meta.json.genre_detected`，按下表加载对应题材风格包**（analyze 识别的题材 → write 的 genre-styles 包），正文腔调/招式随之切换：
+2. **读 `_meta.json.genre_detected`，按下表加载 `genres/` 下对应题材模板**（WB 包以 `genres/` 37 题材模板为唯一按题材资源，命名与长频一致；短篇题材取最近模板，详见 `genre-prose-cards.md` 索引匹配），正文腔调/招式随之切换：
 
-   | analyze 的 `genre_detected` | 加载 `genre-styles/` 包 |
+   | analyze 的 `genre_detected` | 加载 `genres/` 下对应题材模板 |
    |---|---|
-   | 追妻（现代 / 古代 / 民国） | `追妻火葬场.md`（按「时代变体」节切换身份词与招式） |
-   | 小三 / 死人文学 | `追妻火葬场.md`（「流派分支」节） |
-   | 世情 / 打脸爽文 / 家庭伦理 | `世情打脸.md` |
-   | 重生复仇 | `复仇打脸.md` |
-   | 豪门 / 总裁（豪门联姻虐恋） | `总裁豪门.md` |
-   | 宫斗宅斗 / 宫斗 / 宅斗 / 古言重生 | `宅斗宫斗.md` |
-   | 民俗 / 怪谈 / 灵异 | `民俗怪谈.md` |
-   | 悬疑 / 推理 / 惊悚 | `悬疑.md` |
-   | 甜宠 / 先虐后甜 / 先婚后爱 | `甜宠.md` |
-   | 双男主 | `双男主.md` |
-   | 沙雕 / 脑洞 / 弹幕 / 系统 | `沙雕脑洞.md` |
-   | 仙侠 / 通用 | 无专属包 → `short-craft.md` 底座 + `genre-writing-formulas.md` 兜底 |
+   | 追妻（现代 / 古代 / 民国） | `genres/豪门总裁.md` + `genres/青春甜宠.md`（虐恋 / 先虐后甜近似） |
+   | 小三 / 死人文学 | `genres/豪门总裁.md` |
+   | 世情 / 打脸爽文 / 家庭伦理 | `genres/现实题材.md` · `genres/狗血言情.md` |
+   | 重生复仇 | `genres/替身文.md` · `genres/狗血言情.md` |
+   | 豪门 / 总裁（豪门联姻虐恋） | `genres/豪门总裁.md` |
+   | 宫斗宅斗 / 宫斗 / 宅斗 / 古言重生 | `genres/宫斗宅斗.md` |
+   | 民俗 / 怪谈 / 灵异 | `genres/规则怪谈.md` · `genres/悬疑灵异.md` |
+   | 悬疑 / 推理 / 惊悚 | `genres/悬疑灵异.md` · `genres/女频悬疑.md` · `genres/悬疑脑洞.md` |
+   | 甜宠 / 先虐后甜 / 先婚后爱 | `genres/青春甜宠.md` |
+   | 双男主 | `genres/幻想言情.md`（无专属模板，取近似 + `short-craft.md` 底座） |
+   | 沙雕 / 脑洞 / 弹幕 / 系统 | `genres/系统流.md` · `genres/都市脑洞.md` |
+   | 仙侠 / 通用 | `genres/修仙.md`（仙侠）或 `short-craft.md` 底座（通用） |
 
 3. 读取核心发现：结构段落、情绪曲线、反转位置、铺垫方式、句式节奏、可借鉴技法。**把拆文报告里的具体招式对到题材包招式库**：拆文给「这一篇怎么做的」，题材包给「这一类通用怎么做」，两者合用——拆文是当前对标书的实证，题材包是该题材的通法
 4. 写入本篇 `设定.md` 的“对标摘要”区，写作时每个场景从中召回 1-2 个相关技法
@@ -159,7 +161,7 @@ description: "短篇网文写作。辅助短篇小说创作，从构思到成稿
 
 详细步骤和模板见 `references/writing-workflow.md`。构思时从目标情绪反推剧情，不是从灵感正向构建。按顺序完成：
 
-1. 定平台基调 + 加载题材风格包 → 先读 `references/submission-craft.md` 定投稿平台（知乎/小程序/番茄），正文视角、矛盾烈度、章末落点随之切换；再读 `references/genre-styles/{题材}.md`（核心 10 题材）+ 通用底座 `references/short-craft.md`，从招式库选 2-3 个核心招式（如追妻的白月光触发链 / 信物翻转 / 火葬场预告），写入 设定.md「题材招式」区，全程照此招式与腔调写
+1. 定平台基调 + 加载题材风格包 → 先读 `references/submission-craft.md` 定投稿平台（知乎/小程序/番茄），正文视角、矛盾烈度、章末落点随之切换；再读 `references/genres/{题材}.md`（核心 10 题材）+ 通用底座 `references/short-craft.md`，从招式库选 2-3 个核心招式（如追妻的白月光触发链 / 信物翻转 / 火葬场预告），写入 设定.md「题材招式」区，全程照此招式与腔调写
 2. 设计反派（如有）→ 加载 `villain-and-reveal.md`
 3. 确定揭露方式 → 同上
 4. 编写 小节大纲.md（格式见 writing-workflow.md）：短篇只做轻量蓝图，每节包含结构段/五段功能、人物/关系变化、因果/逻辑链、结尾承接/钩子，不套长篇完整章节蓝图。**标出付费点卡在哪一节末**（见 `submission-craft.md`「付费点」：卡脖子断点、付费点前每章 2-3 剧情点、付费点后每章多 1-2）；用反推法先想透付费点那一节，再倒排前后。每节可选一个任务卡点，但必须服务情绪升级、证据推进、关系撕裂、反转铺垫或反击动作；没有就不强补
@@ -285,7 +287,7 @@ description: "短篇网文写作。辅助短篇小说创作，从构思到成稿
 - 插入倒计时钩子或代价钩子制造紧迫感
 - 钩子密度提高到每 2 节一个（按题材分级见 genre-writing-formulas.md）
 - 埋入误导信息，让读者猜错反转方向
-- **数字/金额递增作为叙事工具**（具体数字替代模糊描述，见各 genre-styles 招式库「数字承重」）
+- **数字/金额递增作为叙事工具**（具体数字替代模糊描述，见各 genres/ 招式库「数字承重」）
 - **一动一静交替**：每节有动有静，不连续暴力也不连续安静
 
 #### 第四段：反转（占全文 10-15%）
@@ -381,10 +383,10 @@ description: "短篇网文写作。辅助短篇小说创作，从构思到成稿
 | [references/short-format.md](references/short-format.md) | 写作前必读（短篇正文格式，两平台模板） |
 | [references/submission-craft.md](references/submission-craft.md) | 投稿前必读（平台基调 知乎/小程序/番茄 · 导语门面 · 付费点断点） |
 | [references/short-craft.md](references/short-craft.md) | 写作全程参考（短篇通用底座：情绪直接写+后接具体反应、在场叙述、超短章节制） |
-| [references/genre-styles/](references/genre-styles/) | **定方向后必读**：按题材加载对应风格包（追妻火葬场 / 世情打脸 / 复仇打脸 / 总裁豪门 / 宅斗宫斗 / 民俗怪谈 / 悬疑 / 甜宠 / 双男主 / 沙雕脑洞），正文风格随之切换 |
+| [references/genres/](references/genres/) | **定方向后必读**：按题材加载对应风格包（追妻火葬场 / 世情打脸 / 复仇打脸 / 总裁豪门 / 宅斗宫斗 / 民俗怪谈 / 悬疑 / 甜宠 / 双男主 / 沙雕脑洞），正文风格随之切换 |
 | [references/short-deslop.md](references/short-deslop.md) | 去AI味时必读（短篇专属，只杀真·AI腔，不杀情绪烈度） |
 | [references/writing-workflow.md](references/writing-workflow.md) | Phase 2 设计任务 + Phase 4 精修 |
-| [references/short-write_genre-writing-formulas.md](references/short-write_genre-writing-formulas.md) | 冷门题材结构骨架补充（核心 10 题材直接用 genre-styles/） |
+| [references/short-write_genre-writing-formulas.md](references/short-write_genre-writing-formulas.md) | 冷门题材结构骨架补充（核心 10 题材直接用 genres/） |
 | [references/short-write_genre-writing-techniques.md](references/short-write_genre-writing-techniques.md) | 跨题材通用技法（震惊场景/三翻四震/感情线四阶段/喜剧flag） |
 | [references/emotional-methods.md](references/emotional-methods.md) | 设计情感时 |
 | [references/hooks-chapter.md](references/hooks-chapter.md) | 章节钩子设计 |
@@ -406,17 +408,17 @@ description: "短篇网文写作。辅助短篇小说创作，从构思到成稿
 
 | 主题 | 权威文件（先读） | 配套文件（按角度补充） |
 |------|-----------------|----------------------|
-| 情绪外化（怎么写情绪） | **`references/short-craft.md` 第2节**（情绪直接写+后接具体反应、三段对照、改写四步——替代旧机械替换表） | 各 `genre-styles/` 包的「情绪烈度与模式」 |
+| 情绪外化（怎么写情绪） | **`references/short-craft.md` 第2节**（情绪直接写+后接具体反应、三段对照、改写四步——替代旧机械替换表） | 各 `genres/` 包的「情绪烈度与模式」 |
 | 情绪设计（情感结构） | **`references/emotional-methods.md`**（情感三板斧 + 拉扯节奏 + 失败模式） | `references/short-write_genre-writing-techniques.md`（情绪操控核心法则 / 情绪三层次） |
 | 反转 | **`references/reversal-toolkit.md`**（反转类型 / 铺垫 / 有效性自检） | `references/villain-and-reveal.md`（真相揭露机制 / 反转有效性自检） |
 | 反派揭露 | **`references/villain-and-reveal.md`**（反派模板 / 揭露机制 / 报应设计） | `references/reversal-toolkit.md` |
-| 人物 | **各 `genre-styles/{题材}.md` 的「对话风格」「招式库」**（受害者-复仇者主角声线、白月光软刀、施害者道德绑架人设，corpus-grounded） | `references/villain-and-reveal.md`（反派/揭露）· `references/short-write_genre-writing-techniques.md`（三层标签反差 / 人设从缺点开始）· `references/dialogue-mastery.md`（声线差异） |
+| 人物 | **各 `genres/{题材}.md` 的「对话风格」「招式库」**（受害者-复仇者主角声线、白月光软刀、施害者道德绑架人设，corpus-grounded） | `references/villain-and-reveal.md`（反派/揭露）· `references/short-write_genre-writing-techniques.md`（三层标签反差 / 人设从缺点开始）· `references/dialogue-mastery.md`（声线差异） |
 | 钩子 | **`references/hooks-chapter.md`**（章节/开篇钩子类型） | `references/hooks-paragraph.md`（段落钩子）· `references/hooks-suspense.md`（悬念设计） |
-| 女频写作 | **对应 `genre-styles/{题材}.md`**（追妻火葬场 / 总裁豪门 / 宅斗宫斗 / 甜宠 / 世情打脸的题材声线、虐爽比例、招式） | `references/short-write_genre-writing-techniques.md`（女频读者心理与写作技法 / 感情线四阶段推进法）· `references/emotional-methods.md`（情绪拉扯） |
-| 题材风格 | **`references/genre-styles/{题材}.md`**（核心 10 题材的腔调/开篇/钩子/情绪烈度/招式/收尾，corpus-grounded） | `references/short-write_genre-writing-formulas.md`（冷门题材结构骨架）· `references/short-write_genre-writing-techniques.md`（核心梗 / 卖点 / 通用技法） |
-| 开头 | **各 `genre-styles/{题材}.md` 的「开篇范式」**（关系锚 + 全弧剧透导语 + 火葬场预告，真实开篇范例）+ `short-craft.md` 第12节（开头事件密度） | `references/hooks-chapter.md`（开篇钩子类型）· `references/hooks-paragraph.md`（段钩密度） |
+| 女频写作 | **对应 `genres/{题材}.md`**（追妻火葬场 / 总裁豪门 / 宅斗宫斗 / 甜宠 / 世情打脸的题材声线、虐爽比例、招式） | `references/short-write_genre-writing-techniques.md`（女频读者心理与写作技法 / 感情线四阶段推进法）· `references/emotional-methods.md`（情绪拉扯） |
+| 题材风格 | **`references/genres/{题材}.md`**（核心 10 题材的腔调/开篇/钩子/情绪烈度/招式/收尾，corpus-grounded） | `references/short-write_genre-writing-formulas.md`（冷门题材结构骨架）· `references/short-write_genre-writing-techniques.md`（核心梗 / 卖点 / 通用技法） |
+| 开头 | **各 `genres/{题材}.md` 的「开篇范式」**（关系锚 + 全弧剧透导语 + 火葬场预告，真实开篇范例）+ `short-craft.md` 第12节（开头事件密度） | `references/hooks-chapter.md`（开篇钩子类型）· `references/hooks-paragraph.md`（段钩密度） |
 | 格式与节奏 | **`references/short-format.md`**（短篇正文格式，两平台模板） | `references/short-craft.md`（情绪直接写+后接具体反应/三维度揉进/疏密）· `references/writing-workflow.md`（设计/精修工作流） |
-| 对话 | **`references/dialogue-mastery.md`**（对话技法主文件：差异化/潜台词/对话节奏） | `references/short-craft.md`（三类台词与对话权力博弈）· 各 `genre-styles/` 包的真实金句库 |
+| 对话 | **`references/dialogue-mastery.md`**（对话技法主文件：差异化/潜台词/对话节奏） | `references/short-craft.md`（三类台词与对话权力博弈）· 各 `genres/` 包的真实金句库 |
 | 去AI味 | **`references/short-deslop.md`**（短篇专属：只杀真·AI腔，不杀情绪烈度/审判句/火葬场预告） | `references/short-write_banned-words.md`（禁用词扫描）· `scripts/check-ai-patterns.js`（AI句式复扫）· `references/short-write_quality-checklist.md`（成稿检查） |
 
 ---
