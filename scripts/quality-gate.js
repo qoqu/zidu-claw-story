@@ -11,7 +11,7 @@ Unified quality gate that runs all checks and blocks output if standards aren't 
 
 Checks:
   1. style-lint       — Level 1 banned words → BLOCK
-     ai-patterns     — AI 散文痕迹（抽象总结/套词/陈词/比喻/推理链/微动作）→ BLOCK (blocking 类)
+     check-ai-patterns — AI 散文痕迹（不是A而是B / 破折号 由其独家 blocking 门禁；抽象总结/套词/陈词/比喻/推理链/微动作）→ BLOCK (blocking 类)
   2. consistency      — Item/environment/character/timeline errors → BLOCK
   3. foreshadow       — Overdue foreshadowing (>50 chapters) → BLOCK
   4. wordcount        — Chapter word count < target 90% → BLOCK

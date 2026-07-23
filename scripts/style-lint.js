@@ -5,15 +5,19 @@ const fs = require('fs');
 const path = require('path');
 const { BANNED_LEVEL1, BANNED_LEVEL2, DEGREE_ADVERBS, AI_PATTERNS } = require("./banned-words");
 
+// P1（v1.7.10）：「不是A而是B」改由 check-ai-patterns 独家 blocking 门禁（not-is-comparison），
+// 本脚本不再重复检查，消除双阻断。其余 AI_PATTERNS 仍由 style-lint 负责（check-ai-patterns 无对应阻断项）。
+const STYLE_LINT_AI_PATTERNS = AI_PATTERNS.filter(p => !/不是A而是B/.test(p.desc));
+
 const USAGE = `Usage: node style-lint.js <chapter-file> [project-dir] [--json] [--full]
 
 Check chapter for AI-style writing issues:
 - Banned words (一级/二级)
-- AI sentence patterns (不是A而是B, 带着X万能状语, 感到X涌上心头, etc.)
+- AI sentence patterns (带着X万能状语, 感到X涌上心头, 仿佛X一般, 这一刻X/终于明白X 等；注：「不是A而是B」已由 check-ai-patterns 独家 blocking 门禁，本脚本不再重复查)
 - Degree adverbs (非常/极其/十分 etc.)
 - Paragraph/sentence length violations
 - Dialogue tag overuse and ratio
-- AI special punctuation (smart quotes, em dash, zero-width chars)
+- AI special punctuation (smart quotes, zero-width chars；注：破折号 —— 已由 check-ai-patterns 独家 blocking 门禁)
 - Summary/sublimation endings
 - Show-don't-tell (psychology verbs)
 - Parallel structure overuse
@@ -69,11 +73,11 @@ function checkBannedWords(text) {
 }
 
 /**
- * 检测 AI 句式（使用 banned-words.js 中的 AI_PATTERNS 正则列表）
+ * 检测 AI 句式（使用 banned-words.js 中的 AI_PATTERNS 正则列表，已排除「不是A而是B」交由 check-ai-patterns）
  */
 function checkAISentencePatterns(text) {
   const results = [];
-  for (const { re, desc, level } of AI_PATTERNS) {
+  for (const { re, desc, level } of STYLE_LINT_AI_PATTERNS) {
     const matches = text.match(re);
     if (matches) {
       results.push({ pattern: desc, level, count: matches.length, samples: matches.slice(0, 3) });
@@ -178,11 +182,11 @@ function checkDialogueUsage(text) {
  */
 function checkAIPunctuation(text) {
   const issues = [];
-  // 印刷级可见标点（AI指纹）
-  const aiPunct = /[\u2014\u2013\u201C\u201D\u2018\u2019\u2026\u00A0\u202F]/g;
+  // 印刷级可见标点（AI指纹）。破折号（—/–）已由 check-ai-patterns 独家 blocking 门禁，本函数不再查。
+  const aiPunct = /[\u201C\u201D\u2018\u2019\u2026\u00A0\u202F]/g;
   const punctMatches = text.match(aiPunct);
   if (punctMatches) {
-    issues.push({ type: 'ai_punctuation', count: punctMatches.length, detail: `发现 ${punctMatches.length} 处AI特殊标点（智能引号/破折号/不换行空格等），建议替换为普通标点` });
+    issues.push({ type: 'ai_punctuation', count: punctMatches.length, detail: `发现 ${punctMatches.length} 处AI特殊标点（智能引号/不换行空格等；破折号由 check-ai-patterns 门禁），建议替换为普通标点` });
   }
   // 不可见字符
   const invisible = /[\u200B\u200C\u200D\u2009\uFEFF\u00AD]/g;
