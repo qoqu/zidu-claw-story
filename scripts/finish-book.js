@@ -23,13 +23,14 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const USAGE = `Usage: node finish-book.js <项目目录> [--json] [--no-archive]
+const USAGE = `Usage: node finish-book.js <项目目录> [--json] [--todo] [--no-archive]
 
 完结门禁：收尾前检查全书是否可完结（伏笔回收 / 设定缺口 / 事实矛盾 / 收尾章质量门），
 输出完结报告并做归档备份。
 
 选项：
-  --json          输出结构化 JSON（含 blockers / advisories / checks / archive）
+  --json          输出结构化 JSON（含 blockers / advisories / checks / archive / todo）
+  --todo          同时输出回炉待办清单（章号 / 原因 / 建议动作），阻断项可自动转待办
   --no-archive    跳过归档备份（默认会复制 设定/正文/大纲/追踪/记忆/对标 到 完结归档_<时间戳>/）
 
 退出码：
@@ -80,11 +81,59 @@ function findFirstChapter(proj) {
   return firstFile ? path.join(body, firstFile) : null;
 }
 
+// 把每个阻断项转成结构化待办：检查名 / 章号 / 原因 / 建议动作
+// 这样可与 doctor.js / pipeline-gate.js 状态机联动，自动产出回炉序列
+function buildTodoList(checks, lastCh) {
+  const todo = [];
+  const cMap = new Map(checks.map(c => [c.name, c]));
+  const lastBase = lastCh ? path.basename(lastCh) : null;
+  const lastNum = lastBase ? (lastBase.match(/第\s*(\d+)\s*章/) || [])[1] : null;
+
+  if (cMap.has('伏笔回收')) {
+    const c = cMap.get('伏笔回收');
+    if (c.pending > 0) todo.push({
+      check: '伏笔回收',
+      chapter: lastBase ? `覆盖全本（最早→第${lastNum}章）` : '覆盖全本',
+      reason: `${c.pending} 条伏笔未回收（含 ${c.overdue} 条逾期 >50 章）`,
+      action: 'node scripts/foreshadow-check.js <最早章> <项目> --full → 按列表层级回收（最近章优先；超 50 章的逾期伏笔必须收束或显式标"放弃回收"）',
+    });
+  }
+  if (cMap.has('设定缺口')) {
+    const c = cMap.get('设定缺口');
+    if (c.totalBlocking > 0) todo.push({
+      check: '设定缺口',
+      chapter: '见 设定/缺口报告.md',
+      reason: `${c.totalBlocking} 个阻断缺口未填`,
+      action: 'node scripts/detect-story-gaps.js <项目> → 按优先级补全（世界规则 > 角色属性 > 物品/地点）',
+    });
+  }
+  if (cMap.has('事实矛盾')) {
+    const c = cMap.get('事实矛盾');
+    if (c.conflicts && c.conflicts !== 'skip' && c.conflicts > 0) todo.push({
+      check: '事实矛盾',
+      chapter: '跨章（见 追踪/事实账本.md）',
+      reason: `${c.conflicts} 处矛盾候选（确定性快筛）`,
+      action: 'node scripts/continuity-ledger.js <项目> → 读 references/setup_consistency-checker.md 走 LLM 子代理做 S1-S4 分级裁决，按裁决改对应章节',
+    });
+  }
+  if (cMap.has('收尾章质量门') && lastBase) {
+    const c = cMap.get('收尾章质量门');
+    if (c.status === 'blocked') todo.push({
+      check: '收尾章质量门',
+      chapter: `第${lastNum}章（${lastBase}）`,
+      reason: '收尾章仍有阻断项',
+      action: 'node scripts/quality-gate.js <最新章> <项目> --json --no-score --skip-pacing → 按维度修复（去味 / 禁用词 / 退化 / 伏笔 / 一致性 / 字数）',
+    });
+  }
+  return todo;
+}
+
 function main() {
   const argv = process.argv.slice(2);
   const jsonMode = argv.includes('--json');
+  const todoMode = argv.includes('--todo');
   const noArchive = argv.includes('--no-archive');
-  const filtered = argv.filter(a => a !== '--json' && a !== '--no-archive');
+  const filtered = argv.filter(a => a !== '--json' && a !== '--todo' && a !== '--no-archive');
 
   if (filtered.length === 0 || filtered[0] === '--help') {
     console.log(USAGE);
@@ -166,6 +215,7 @@ function main() {
   }
 
   const pass = blockers.length === 0;
+  const todo = buildTodoList(checks, lastCh);
 
   // 写 追踪/完结报告.md
   try {
@@ -182,6 +232,9 @@ function main() {
       '## 阻断项（完结前必须修复）',
       blockers.length ? blockers.map((b, i) => `${i + 1}. ${b}`).join('\n') : '（无）',
       '',
+      '## 回炉待办清单（章号 / 原因 / 建议动作）',
+      todo.length ? todo.map((t, i) => `${i + 1}. [${t.check}] 章号：${t.chapter}\n   原因：${t.reason}\n   动作：${t.action}`).join('\n') : '（无）',
+      '',
       '## 提示（非阻断）',
       advisories.length ? advisories.map((a, i) => `${i + 1}. ${a}`).join('\n') : '（无）',
       '',
@@ -193,7 +246,7 @@ function main() {
   } catch { /* 报告写入失败不阻断门禁 */ }
 
   if (jsonMode) {
-    console.log(JSON.stringify({ status: pass ? 'ready' : 'blocked', blockers, advisories, checks, archive: archivePath }, null, 2));
+    console.log(JSON.stringify({ status: pass ? 'ready' : 'blocked', blockers, advisories, checks, archive: archivePath, todo }, null, 2));
     process.exit(pass ? 0 : 2);
   }
 
@@ -208,6 +261,14 @@ function main() {
     console.log('\n🚫 阻断项（完结前必须修复）：');
     blockers.forEach((b, i) => console.log(`  ${i + 1}. ${b}`));
   }
+  if (todo.length > 0 && todoMode) {
+    console.log('\n📋 回炉待办清单（章号 / 原因 / 建议动作）：');
+    todo.forEach((t, i) => {
+      console.log(`  ${i + 1}. [${t.check}] 章号：${t.chapter}`);
+      console.log(`     原因：${t.reason}`);
+      console.log(`     动作：${t.action}`);
+    });
+  }
   if (advisories.length > 0) {
     console.log('\n⚠️ 提示（非阻断）：');
     advisories.forEach((a, i) => console.log(`  ${i + 1}. ${a}`));
@@ -220,6 +281,9 @@ function main() {
     process.exit(0);
   } else {
     console.log('\n⛔ 存在阻断项，先修复再完结。');
+    if (todo.length > 0 && !todoMode) {
+      console.log(`   提示：用 --todo 同时输出回炉待办清单（共 ${todo.length} 项），可直接按章号定位回炉。`);
+    }
     process.exit(2);
   }
 }

@@ -3,8 +3,11 @@
 /*
  * assemble-genre-card.js — 题材正文提示卡自动组装
  *
- * 解决 SOP 最大手工瓶颈：把「题材定位 + genre-prose-cards 索引 + genres/{题材}.md 模板
- * + style-genre-modules 流派模块」四源手动合并成 设定/题材正文提示卡.md 的过程自动化。
+ * 解决 SOP 最大手工瓶颈：把「题材定位 + genre-prose-cards 索引 + references/{题材}.md 根级长篇样本驱动提示卡
+ * + genres/{题材}.md 题材模板 + style-genre-modules 流派模块」五源自动合并成 设定/题材正文提示卡.md。
+ *
+ * 根级卡（references/{题材}.md，带 YAML frontmatter，source=local_longform_sample_derived）侧重「写作实战」，
+ * 优先消费；genres/{题材}.md 侧重「结构化分析」作为补充。两类资源关系见 references/genre-prose-cards.md 新增段。
  *
  * 零依赖纯 Node。不修改 references/，只读；只写项目目录下的 设定/题材正文提示卡.md。
  *
@@ -12,7 +15,7 @@
  *   node assemble-genre-card.js <项目目录> <题材> [--platform X] [--force] [--json]
  *   node assemble-genre-card.js <项目目录>            # 题材从 设定/题材定位.md 推断
  *
- * 退出码：0=已生成/已存在跳过  1=参数/解析错误  2=未找到题材模板
+ * 退出码：0=已生成/已存在跳过  1=参数/解析错误  2=未找到题材资源（genres/ 与根级卡均无）
  */
 const fs = require('fs');
 const path = require('path');
@@ -69,6 +72,40 @@ function parseSections(file) {
   }
   flush();
   return secs;
+}
+
+// 通用段名解析：兼容 `## N. 标题`（genres/）与 `## 标题`（根级长篇样本驱动卡）
+function parseAnySections(file) {
+  const text = fs.readFileSync(file, 'utf-8');
+  const lines = text.split('\n');
+  const secs = {};
+  let cur = null, buf = [];
+  const flush = () => { if (cur != null) secs[cur] = buf.join('\n').trim(); };
+  for (const l of lines) {
+    const m = l.match(/^##\s+(?:\d+\.\s*)?(.+?)\s*$/);
+    if (m) { flush(); cur = m[1].trim(); buf = []; }
+    else if (cur != null) buf.push(l);
+  }
+  flush();
+  return secs;
+}
+
+// 解析根级卡 YAML frontmatter（genre/aliases/platform/confidence/source）
+function parseFrontmatter(text) {
+  const m = text.match(/^---\s*\n([\s\S]*?)\n---\s*\n/);
+  if (!m) return {};
+  const out = {};
+  for (const ln of m[1].split('\n')) {
+    const kv = ln.match(/^([\w-]+)\s*:\s*(.*)$/);
+    if (kv) {
+      let v = kv[2].trim();
+      if (v.startsWith('[') && v.endsWith(']')) {
+        v = v.slice(1, -1).split(',').map(x => x.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
+      }
+      out[kv[1].trim()] = v;
+    }
+  }
+  return out;
 }
 
 // 在索引里按题材名或别名解析真实 genres 模板路径
@@ -154,27 +191,53 @@ function subsectionBullets(moduleText, name) {
 }
 
 function buildCard(opts) {
-  const { genre, platform, bl, secs, style } = opts;
+  const { genre, platform, bl, secs, style, rootSecs, rootFm } = opts;
   const field = (label, val) => `- ${label}：${val || '（待据题材定位与对标补全）'}`;
+  // 优先消费根级长篇样本驱动卡（写作实战），无则回退 genres/ 模板（结构化分析）
+  const pick = (rootK, genreK, max) => {
+    const r = rootSecs && rootSecs[rootK];
+    if (r) return inline(r, max);
+    return inline(secs && (secs[genreK] || secs[altKey(genreK)] || ''), max);
+  };
   const lines = [];
   lines.push('## 题材正文提示卡');
   lines.push('');
   const tp = [genre, platform].filter(Boolean).join(' · ');
   lines.push(field('主题材 / 平台', tp + (bl ? ' · 双男主(BL)' : '')));
-  lines.push(field('题材边界', inline(secs['核心流派/细分'] || secs['核心流派'] || '', 300)));
-  lines.push(field('核心逻辑', inline(secs['世界观/设定要素'] || secs['世界观/生活逻辑'] || '', 400)));
-  lines.push(field('读者期待', inline(secs['经典爽点套路'] || secs['核心爽点/情绪'] || '', 300)));
-  lines.push(field('核心爽点 / 情绪', inline(secs['经典爽点套路'] || secs['常见情绪转化'] || '', 400)));
-  lines.push(field('节奏密度', inline(secs['大纲节奏建议'] || secs['前中后期打法'] || '', 300)));
-  lines.push(field('场景颗粒', inline((secs['世界观/设定要素'] || '') + '\n' + (secs['经典爽点套路'] || ''), 250)));
-  const voice = [subsectionBullets(style, '核心规则'), subsectionBullets(style, '章节操作')].filter(Boolean).join('\n');
-  lines.push(field('对话与人物声线', inline(voice, 300)));
-  lines.push(field('禁止漂移', inline(secs['常见雷区/禁忌'] || secs['禁止漂移'] || '', 300)));
+  if (rootFm && (rootFm.source || rootFm.confidence)) {
+    lines.push(field('来源 / 置信度', `${rootFm.source || 'local'} · ${rootFm.confidence || '?'}`));
+  }
+  lines.push(field('题材边界', pick('开场抓手', '核心流派/细分', 300)));
+  lines.push(field('核心逻辑', pick('冲突发动机', '世界观/设定要素', 400)));
+  lines.push(field('读者期待', pick('正文提示词', '经典爽点套路', 300)));
+  lines.push(field('核心爽点 / 情绪', pick('爽点与情绪释放', '经典爽点套路', 400)));
+  lines.push(field('节奏密度', pick('节奏密度', '大纲节奏建议', 300)));
+  lines.push(field('场景颗粒', pick('场景颗粒', '世界观/设定要素', 250)));
+  // 对话与人物声线：根级卡有「对话与声线」则优先，否则从 style 模块抽
+  const voiceRoot = rootSecs && rootSecs['对话与声线'];
+  const voice = voiceRoot
+    ? inline(voiceRoot, 300)
+    : inline([subsectionBullets(style, '核心规则'), subsectionBullets(style, '章节操作')].filter(Boolean).join('\n'), 300);
+  lines.push(field('对话与人物声线', voice));
+  lines.push(field('禁止漂移', pick('禁止漂移', '常见雷区/禁忌', 300)));
   lines.push('- 本章取舍：（写前从上面抽取 2-4 条执行，不全量套用；逐章更新）');
   lines.push('');
   lines.push('> 本书文风（句长/标点/潜台词/笔调）来自 `设定/文风.md`，不在此卡覆盖；写作前合并三件套。');
-  lines.push(`> 自动生成自 genres/${genre}.md + style-genre-modules；如需微调，直接编辑本文件即可。`);
+  const src = rootFm ? `references/${genre}.md（根级长篇样本驱动提示卡，source=${rootFm.source || '?'}）` : `genres/${genre}.md（结构化模板）`;
+  lines.push(`> 自动生成自 ${src}${style ? ' + style-genre-modules' : ''}；如需微调，直接编辑本文件即可。`);
   return lines.join('\n');
+}
+
+// 别名兼容（genres/ 模板旧版段名）
+function altKey(k) {
+  const map = {
+    '核心流派/细分': '核心流派',
+    '世界观/设定要素': '世界观/生活逻辑',
+    '经典爽点套路': '核心爽点/情绪',
+    '大纲节奏建议': '前中后期打法',
+    '常见雷区/禁忌': '禁止漂移',
+  };
+  return map[k] || k;
 }
 
 function main() {
@@ -204,12 +267,21 @@ function main() {
   const bl = !!pos.bl;
 
   const tmpl = resolveGenre(genre);
-  if (!tmpl) {
-    err(`未找到题材模板 genres/${genre}.md（索引与 genres/ 均无匹配；可用别名见 genre-prose-cards.md）`);
+  const secs = tmpl ? parseAnySections(tmpl) : {};
+  const style = extractStyle(genre);
+
+  // 第 4 源（priority）：根级 references/{题材}.md（长篇样本驱动提示卡，写作实战；存在则优先消费）
+  const rootFile = path.join(SKILL, 'references', genre + '.md');
+  const rootExists = fs.existsSync(rootFile);
+  if (!rootExists && !tmpl) {
+    err(`未找到题材资源：genres/${genre}.md 与根级 references/${genre}.md 均不存在（索引与 genres/ 目录均无匹配；可用别名见 genre-prose-cards.md）`);
     return 2;
   }
-  const secs = parseSections(tmpl);
-  const style = extractStyle(genre);
+  let rootSecs = null, rootFm = null;
+  if (rootExists) {
+    rootSecs = parseAnySections(rootFile);
+    rootFm = parseFrontmatter(fs.readFileSync(rootFile, 'utf-8'));
+  }
 
   const outDir = path.join(projDir, '设定');
   const outFile = path.join(outDir, '题材正文提示卡.md');
@@ -219,16 +291,24 @@ function main() {
     return 0;
   }
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-  const card = buildCard({ genre, platform, bl, secs, style });
+  const card = buildCard({ genre, platform, bl, secs, style, rootSecs, rootFm });
   fs.writeFileSync(outFile, card + '\n', 'utf-8');
 
   info(`已生成 ${path.relative(projDir, outFile)}`);
-  info(`题材=${genre} 平台=${platform}${bl ? ' BL' : ''} 模板小节=${Object.keys(secs).length} 流派模块=${style ? '已抽' : '无'}`);
+  const sources = [rootExists ? `根级卡(${Object.keys(rootSecs || {}).length}段)` : null, tmpl ? `genres/(${Object.keys(secs).length}段)` : null, style ? 'style' : null].filter(Boolean).join('+');
+  info(`题材=${genre} 平台=${platform}${bl ? ' BL' : ''} 来源=${sources}`);
   if (!json) {
     console.log(DIM + '---- 预览 ----' + RESET);
     console.log(card);
   } else {
-    console.log(JSON.stringify({ status: 'written', file: outFile, genre, platform, sections: Object.keys(secs) }, null, 2));
+    console.log(JSON.stringify({
+      status: 'written', file: outFile, genre, platform,
+      sources: {
+        rootCard: rootExists ? { file: rootFile, fm: rootFm, sections: Object.keys(rootSecs) } : null,
+        genres: tmpl ? { file: tmpl, sections: Object.keys(secs) } : null,
+        style: !!style,
+      },
+    }, null, 2));
   }
   return 0;
 }
