@@ -111,6 +111,8 @@ description: "短篇网文写作。辅助短篇小说创作，从构思到成稿
    | 沙雕 / 脑洞 / 弹幕 / 系统 | `genres/系统流.md` · `genres/都市脑洞.md` |
    | 仙侠 / 通用 | `genres/修仙.md`（仙侠）或 `short-craft.md` 底座（通用） |
 
+> **题材/变体延伸笔记**：双男主（BL）短篇变体写作见 [`short-write_双男主.md`](short-write_双男主.md)；BL 读者与平台注意见 [`setup_双男主.md`](setup_双男主.md)；题材写法框架见 [`setup_genre-writing-formulas.md`](setup_genre-writing-formulas.md)、[`setup_genre-catalog.md`](setup_genre-catalog.md)、[`setup_genre-core-mechanics.md`](setup_genre-core-mechanics.md)、[`setup_genre-readers.md`](setup_genre-readers.md)。
+
 3. 读取核心发现：结构段落、情绪曲线、反转位置、铺垫方式、句式节奏、可借鉴技法。**把拆文报告里的具体招式对到题材包招式库**：拆文给「这一篇怎么做的」，题材包给「这一类通用怎么做」，两者合用——拆文是当前对标书的实证，题材包是该题材的通法
 4. 写入本篇 `设定.md` 的“对标摘要”区，写作时每个场景从中召回 1-2 个相关技法
 5. 如只找到原文、未找到拆文报告，提示用户先运行 `/story-short-analyze`；如用户要求继续，也可只按原文做弱参考

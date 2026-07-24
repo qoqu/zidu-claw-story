@@ -486,18 +486,44 @@ function cmdFinish(argv) {
   return r.code;
 }
 
+// ===== genre-card：题材正文提示卡自动组装（路由到 assemble-genre-card.js） =====
+function cmdAssemble(argv) {
+  const dirArg = getOpt(argv, '--dir', '.');
+  const dir = path.resolve(dirArg);
+  if (!fs.existsSync(dir)) { err(`项目目录不存在：${dir}`); return 1; }
+  const args = [dir];
+  // 提取真正的题材位置参数（跳过 --选项 及其紧邻的值）
+  const positionals = [];
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a.startsWith('--')) { i++; continue; }
+    positionals.push(a);
+  }
+  const genre = getOpt(argv, '--genre', null) || positionals.find(a => a !== dirArg && a !== dir && a !== '.');
+  if (genre) args.push(genre);
+  if (argv.includes('--platform')) { args.push('--platform'); const p = getOpt(argv, '--platform'); if (p) args.push(p); }
+  if (argv.includes('--force')) args.push('--force');
+  if (argv.includes('--json')) args.push('--json');
+  log(`题材正文提示卡组装（${path.basename(dir)}）`);
+  const r = run('assemble-genre-card.js', args, { timeout: 60000 });
+  if (r.out) process.stdout.write(r.out);
+  if (r.err) process.stderr.write(r.err);
+  return r.code;
+}
+
 function main() {
   const argv = process.argv.slice(2);
   const sub = argv[0];
-  const map = { scan: cmdScan, match: cmdMatch, scaffold: cmdScaffold, plan: cmdPlan, review: cmdReview, finish: cmdFinish };
+  const map = { scan: cmdScan, match: cmdMatch, scaffold: cmdScaffold, plan: cmdPlan, review: cmdReview, finish: cmdFinish, 'genre-card': cmdAssemble };
   if (!sub || !map[sub]) {
-    console.error(`${RED}用法：${RESET}node topic-to-book.js <scan|match|scaffold|plan|review|finish> [选项]`);
+    console.error(`${RED}用法：${RESET}node topic-to-book.js <scan|match|scaffold|plan|review|finish|genre-card> [选项]`);
     console.error('  scan    [--from-rank [--refresh] [--rank-dir D]] 选题情报');
     console.error('  match   --topic "..." 选题匹配');
     console.error('  scaffold --genre X --title Y [--dir D]');
     console.error('  plan    --dir D [--words 3000]');
     console.error('  review  --dir D');
     console.error('  finish  --dir D [--no-archive]  完结门禁');
+    console.error('  genre-card --dir D [<题材>] [--platform X] [--force]  题材正文提示卡自动组装');
     process.exit(1);
   }
   try { process.exit(map[sub](argv.slice(1))); }

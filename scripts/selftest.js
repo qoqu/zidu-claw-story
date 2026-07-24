@@ -4,7 +4,7 @@
 /**
  * selftest.js — zidu-claw-story 自测套件 / 回归护栏（v1.5.0 新增）
  *
- * 目的：50 个脚本靠手动冒烟容易改坏一个带崩一片。本脚本给整包做冒烟：
+ * 目的：51 个脚本靠手动冒烟容易改坏一个带崩一片。本脚本给整包做冒烟：
  *   阶段1 语法检查   node --check 每个脚本（零副作用、最快）
  *   阶段2 启动冒烟   非网络/非浏览器脚本跑 `--help`（或空参），断言"不崩"
  *                    判过标准：exit 0/1/2 且首几行无未捕获异常堆栈
@@ -213,6 +213,22 @@ function phaseFunctional(dir) {
       const fb = JSON.parse(fbOut);
       if (!fb.status || !Array.isArray(fb.checks)) fails.push('finish-book 未产出结构化输出');
     } catch { fails.push('finish-book 输出非合法 JSON'); }
+  }
+
+  // 10) assemble-genre-card 冒烟（新脚本：题材正文提示卡自动组装链路可用）
+  let agOut = '';
+  try {
+    agOut = execFileSync(node, [path.join(dir, 'assemble-genre-card.js'), proj, '修仙', '--force', '--json'],
+      { stdio: 'pipe', timeout: 30000 }).toString();
+  } catch (e) {
+    agOut = ((e.stdout || '') + (e.stderr || '')).toString();
+  }
+  if (stackIn(agOut)) fails.push('assemble-genre-card 崩溃：' + agOut.trim().split('\n')[0]);
+  else if (agOut) {
+    try {
+      const ag = JSON.parse(agOut);
+      if (ag.status !== 'written') fails.push('assemble-genre-card 未生成卡片');
+    } catch { fails.push('assemble-genre-card 输出非合法 JSON'); }
   }
 
   try { fs.rmSync(tmp, { recursive: true, force: true }); } catch { /* ignore */ }

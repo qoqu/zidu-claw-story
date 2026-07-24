@@ -19,6 +19,7 @@ const DOMAINS = [
       { name: '短篇写作', entry: 'references/short-write.md', note: '盐言 / 一万字短篇结构' },
       { name: '题材库(37)', entry: 'references/genres/', note: '开书选题材模板作为设定基底' },
       { name: '完结门禁', entry: 'scripts/finish-book.js', note: '收尾前全书体检：伏笔回收/设定缺口/事实矛盾/收尾章质量门，exit0 可完结' },
+      { name: '题材卡组装', entry: 'scripts/assemble-genre-card.js', note: '自动抽 题材定位+索引+genres模板+风格模块 生成 设定/题材正文提示卡.md' },
     ],
   },
   {
@@ -94,7 +95,7 @@ const DOMAINS = [
     title: '流  —— 选题→成书闭环 / 自测（T4 新增）',
     items: [
       { name: '选题→成书闭环', entry: 'scripts/topic-to-book.js', note: 'scan(含选题情报蓝海指数，--refresh 一键刷实时热榜)/match/scaffold/plan/review 串起扫榜→开书→追读复盘' },
-      { name: '自测套件', entry: 'scripts/selftest.js', note: '50 脚本语法/启动/功能三层冒烟，改一处不崩一片' },
+      { name: '自测套件', entry: 'scripts/selftest.js', note: '51 脚本语法/启动/功能三层冒烟，改一处不崩一片' },
     ],
   },
 ];
