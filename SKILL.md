@@ -183,7 +183,7 @@ node scripts/dashboard.js <根目录> [--json] [--html out.html]
 
 ## 四·扩：题材库检索 / 设定卡 / 发布物料（T3 新增）
 
-三者均**确定性、零依赖**，与既有 LLM 子代理（`consistency-checker.md`）与爬虫（`*rank-scraper.js`）互补。
+三者均**确定性、零依赖**，与既有 LLM 子代理（`setup_consistency-checker.md`）与爬虫（`*rank-scraper.js`）互补。
 
 ### 题材库检索扩充 `genre-library.js`
 ```bash
