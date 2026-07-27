@@ -153,6 +153,8 @@
 
 `tracking-updater.js reading-power`（见 SKILL.md §三）是 `pacing-density` / `quality-gate pacing` / `review 平台复盘` 的唯一数据源；不填则这三处的追读维度永远为空。**3 平台真实率（起点 / 番茄 / 其他）靠平台后台手抄纪律**，极易遗忘，特设此首章前必填清单：
 
+**自动化软强制（已落地）**：`after-chapter` 已内置该校验——宽限期（≤5 章）仅打印提醒不阻断（新书首章常未发表，允许用结构性代理）；宽限期满（第 6 章起）若 `追踪/追读力.md` 仍无任何真实率回填，则 `after-chapter` 以 exit 2 软阻断，提示先跑 `reading-power --real-rate`（或 `--qidian-rate/--fanqie-rate`）。确属无平台真实数据的纯结构性代理本书，可加 `--force` 跳过（留痕 `.pipeline/realrate-force.log`）。
+
 ### 开书时（写第 1 章前）
 
 - [ ] **`tracking-updater.js <项目> init`** 已跑（自动建 追踪/ 目录与模板）

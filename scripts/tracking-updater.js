@@ -31,7 +31,8 @@
  *   node tracking-updater.js <project-dir> init
  *   node tracking-updater.js <project-dir> after-chapter --chapter N --summary "..." [--force]
  *     （after-chapter 会先校验当章已过 quality-gate（.pipeline/qa-passed.json），未过则 exit 2 阻断；
- *       门禁前置流程：净化 → quality-gate → after-chapter。--force 跳过并留痕 .pipeline/qa-force.log）
+ *       另：前 5 章内须补齐真实追读率（references/tracking-spec.md §七），宽限期满（>5 章）仍无则 exit 2 阻断；
+ *       门禁前置流程：净化 → quality-gate → after-chapter。--force 可同时跳过上述两项校验，分别留痕 qa-force.log / realrate-force.log）
  *   node tracking-updater.js <project-dir> add-foreshadow --chapter N --text "..." [--recover "..."]
  *   node tracking-updater.js <project-dir> add-timeline   --chapter N --time "..." --desc "..." --chars "..."
  *   node tracking-updater.js <project-dir> set-character  --name "..." --key "身份" --value "..."
@@ -40,7 +41,7 @@
  *   node tracking-updater.js <project-dir> add-repeat     --content "..." --location "..." [--count N] [--alt "..."]
  *   node tracking-updater.js <project-dir> set-material   --name "..." --status "..." [--chapter N]
  *
- * 退出码：0=成功，1=参数/用法错误，2=文件操作失败 / after-chapter 当章未过 quality-gate（软强制，可 --force 绕过留痕）。
+ * 退出码：0=成功，1=参数/用法错误，2=文件操作失败 / after-chapter 未过 quality-gate 或前 5 章内未补齐真实追读率（均为软强制，可 --force 绕过并分别留痕 qa-force.log / realrate-force.log）。
  */
 
 const fs = require('fs');
@@ -127,6 +128,52 @@ function requireQaForChapter(projectDir, chapterNum, force) {
   err(`第${chapterNum}章尚未通过 quality-gate（.pipeline/qa-passed.json 无该章通过标记）。`);
   err(`请先运行：node quality-gate.js <第${chapterNum}章.md> ${projectDir} 通过后再 track；`);
   err('确属草稿/实验章要跳过，请加 --force（会留痕 .pipeline/qa-force.log）。');
+  return 2;
+}
+
+// ===== 软强制（②）：首章/前 5 章内须补齐真实追读率 =====
+// 杜绝 pacing 信号长期空转（结构性代理占比过高导致水章漏判）。
+// 纪律见 references/tracking-spec.md §七：首次真实率数据须在前 5 章内补齐。
+// 宽限期（≤5 章）仅提醒不阻断（新书首章常未发表，允许用结构性代理）；
+// 宽限期满（>5 章）仍无真实率则软阻断（exit 2），--force 可绕过并留痕 .pipeline/realrate-force.log。
+const REAL_RATE_WINDOW = 5;
+const REAL_RATE_NUM = '\\d+(?:\\.\\d+)?';
+function realRateForceLogPath(projectDir) { return path.join(projectDir, '.pipeline', 'realrate-force.log'); }
+// 检测 chapters 1..upToChapter 中是否任一章已填真实率（数值，非「—」占位）
+function hasRealRateWithin(projectDir, upToChapter) {
+  const c = readFile(rpPath(projectDir));
+  if (!c) return false;
+  for (let n = 1; n <= upToChapter; n++) {
+    const re = new RegExp(`### 第${n}章[\\s\\S]*?(?=\\n### 第|$)`);
+    const blk = c.match(re);
+    if (!blk) continue;
+    const b = blk[0];
+    if (new RegExp(`真实追读率\\s*[（(]?(?:起点|番茄)?[）)]?\\s*[：:]\\s*${REAL_RATE_NUM}`).test(b)) return true;
+    if (new RegExp(`真实完读率\\s*[（(]?(?:起点|番茄)?[）)]?\\s*[：:]\\s*${REAL_RATE_NUM}`).test(b)) return true;
+  }
+  return false;
+}
+function logRealRateForce(projectDir, chapterNum) {
+  try {
+    const fp = realRateForceLogPath(projectDir);
+    fs.mkdirSync(path.dirname(fp), { recursive: true });
+    fs.appendFileSync(fp, `${new Date().toISOString()}\t第${chapterNum}章\t--force 跳过真实追读率前5章补齐校验\n`, 'utf-8');
+  } catch { /* 留痕失败不阻断 */ }
+}
+function requireRealRateForChapter(projectDir, chapterNum, force) {
+  if (hasRealRateWithin(projectDir, chapterNum)) return 0;
+  if (chapterNum <= REAL_RATE_WINDOW) {
+    warn(`第${chapterNum}章尚未回填真实追读率（pacing 暂用结构性代理）。纪律要求首次真实率须在前 ${REAL_RATE_WINDOW} 章内补齐（references/tracking-spec.md §七）。`);
+    return 0;
+  }
+  err(`前 ${REAL_RATE_WINDOW} 章内未补齐真实追读率：pacing 信号将长期空转，水章难被判出。`);
+  err(`请先回填：node tracking-updater.js ${projectDir} reading-power --chapter ${chapterNum} --real-rate <数值> （或 --qidian-rate / --fanqie-rate）。`);
+  if (force) {
+    warn(`--force 跳过真实追读率校验（已留痕 .pipeline/realrate-force.log）`);
+    logRealRateForce(projectDir, chapterNum);
+    return 0;
+  }
+  err('确属无平台真实数据（纯结构性代理本书），请加 --force（会留痕 .pipeline/realrate-force.log）。');
   return 2;
 }
 
@@ -373,9 +420,9 @@ function doReadingPower(projectDir, chapterNum, opts) {
     `- 硬约束违规：${hv}\n` +
     `- 债务余额：${debt}\n` +
     realLines;
-  const re = new RegExp(`### 第${chapterNum}章[\\s\\S]*?(?=\\n### 第|$)`, 'm');
+  const re = new RegExp(`### 第${chapterNum}章[\\s\\S]*?(?=\\n### 第|$)`);
   if (re.test(content)) {
-    content = content.replace(re, block.trimEnd());
+    content = content.replace(re, block);
     log(`更新追读力：第${chapterNum}章`);
   } else {
     if (!content.includes('## 章节追读力快照')) content += '\n## 章节追读力快照\n';
@@ -437,8 +484,11 @@ function main() {
     case 'after-chapter': {
       const chapter = parseInt(getOpt(rest, 'chapter'), 10);
       if (!chapter) { err('缺少 --chapter N'); return 1; }
-      const gate = requireQaForChapter(projectDir, chapter, rest.includes('--force'));
+      const force = rest.includes('--force');
+      const gate = requireQaForChapter(projectDir, chapter, force);
       if (gate !== 0) return gate;
+      const rr = requireRealRateForChapter(projectDir, chapter, force);
+      if (rr !== 0) return rr;
       return afterChapter(projectDir, chapter, getOpt(rest, 'summary'));
     }
 

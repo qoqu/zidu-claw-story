@@ -107,6 +107,30 @@ function phaseFunctional(dir) {
   // 1) tracking-updater init 在子项目内建追踪文件
   run([path.join(dir, 'tracking-updater.js'), proj, 'init'], 'tracking-updater init');
 
+  // 1b) C② 软强制：前 5 章内须补齐真实追读率（after-chapter 卡 real-rate）
+  const runCapture = (cmdArgs) => {
+    try {
+      execFileSync(node, cmdArgs, { cwd: tmp, stdio: 'pipe', timeout: 12000 });
+      return { code: 0 };
+    } catch (e) {
+      return { code: (e.status != null ? e.status : 1) };
+    }
+  };
+  const plDir = path.join(proj, '.pipeline');
+  fs.mkdirSync(plDir, { recursive: true });
+  // 伪造 qa 通过标记，隔离真实率校验（QA 软强制本身另有验证路径）
+  fs.writeFileSync(path.join(plDir, 'qa-passed.json'), JSON.stringify({ chapters: { '1': {}, '6': {} } }));
+  // 宽限期内（≤5 章）无真实率：仅提醒，exit 0
+  if (runCapture([path.join(dir, 'tracking-updater.js'), proj, 'after-chapter', '--chapter', '1', '--summary', 'x']).code !== 0)
+    fails.push('C② 宽限期 after-chapter --chapter 1 应 exit 0（提醒不阻断）');
+  // 宽限期满（>5 章）无真实率：软阻断 exit 2
+  if (runCapture([path.join(dir, 'tracking-updater.js'), proj, 'after-chapter', '--chapter', '6', '--summary', 'x']).code !== 2)
+    fails.push('C② 宽限期满 after-chapter --chapter 6 无真实率应 exit 2（软阻断）');
+  // 回填真实率后：exit 0
+  run([path.join(dir, 'tracking-updater.js'), proj, 'reading-power', '--chapter', '6', '--real-rate', '11.0'], 'reading-power 回填真实率');
+  if (runCapture([path.join(dir, 'tracking-updater.js'), proj, 'after-chapter', '--chapter', '6', '--summary', 'x']).code !== 0)
+    fails.push('C② 回填真实率后 after-chapter --chapter 6 应 exit 0');
+
   // 2) dashboard 扫描该临时根（tmp 下应有 demo-book 1 个项目）
   let dashOut = '';
   try {

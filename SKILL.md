@@ -284,7 +284,7 @@ node scripts/rank-dispatcher.js refresh --dir data/rank    # 逐个 spawn 7 爬�
    1. 写正文（Phase 4）
    2. 净化/格式一次性：`punct-precheck.js`（标点格式化）+ `check-degeneration.js`（退化防护）；**AI 味由第 3 步 quality-gate 内部 check-ai-patterns 覆盖，不要在其外重复跑**
    3. **质量门禁 `quality-gate.js <章.md> <项目> [--genre X]`（exit 0 才过；含 `pacing` 维度，密度过低会 ⚠️ 预警；narrative-writer agent 不跑此脚本）**——这是写章的唯一硬门禁；**通过时把当章写入 `.pipeline/qa-passed.json` 通过标记，未过则清除**
-   4. `tracking-updater.js after-chapter` + **`reading-power`**（喂追读密度数据；不填则 review / pacing 的追读维度永远为空；可加 `--qidian-rate/--fanqie-rate`（起点/番茄）或 `--real-rate` 从平台后台手抄真实追读率，让真实数据接管 pacing 信号）——**软强制：after-chapter 先校验当章 `.pipeline/qa-passed.json` 通过标记，未过 quality-gate 一律 exit 2 阻断（草稿/实验章可 `--force` 跳过并留痕 `.pipeline/qa-force.log`），杜绝 agent / 主线程漏跑门禁导致带病章节入追踪账本**
+   4. `tracking-updater.js after-chapter` + **`reading-power`**（喂追读密度数据；不填则 review / pacing 的追读维度永远为空；可加 `--qidian-rate/--fanqie-rate`（起点/番茄）或 `--real-rate` 从平台后台手抄真实追读率，让真实数据接管 pacing 信号）——**软强制：after-chapter 先校验当章 `.pipeline/qa-passed.json` 通过标记，未过 quality-gate 一律 exit 2 阻断（草稿/实验章可 `--force` 跳过并留痕 `.pipeline/qa-force.log`），杜绝 agent / 主线程漏跑门禁导致带病章节入追踪账本**；**另软强制（②）：前 5 章内须补齐真实追读率（references/tracking-spec.md §七），宽限期满（第 6 章起）仍无真实率则 after-chapter exit 2 阻断（纯结构性代理本书可 `--force` 跳过，留痕 `.pipeline/realrate-force.log`）**
    5. 风格护栏 `drift-guard.js <章.md> --project <项目>`（默认 advisory 不阻断，仅提示文风漂移；可选 `--strict` 阻断）
    6. `learn-bank.js add` 沉淀好写法 + `pipeline-gate.js backup --chapter N` 自动备份
    - **门禁语义说明**：`quality-gate.js` 是综合门禁（内部已含 check-ai-patterns / style-lint 等）；`pipeline-gate.js qa` 只是它外面套的 `.pipeline` 状态机标记壳，**两者不要重复跑**——需要状态机标记时用 `pipeline-gate.js qa`（内部调 quality-gate），否则直接调 `quality-gate.js`。中途失败用 `pipeline-gate.js resume --chapter N` 查看断点续跑。

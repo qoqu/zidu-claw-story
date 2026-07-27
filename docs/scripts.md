@@ -4,7 +4,7 @@
 
 命令中的 `<项目目录>` 指你的小说工程根（含 `正文/` `设定/` `追踪/` 等）。
 
-> **统一写章流程（canonical，每章 6 步；v1.7.15 起门禁前置）**：① 写正文 → ② **净化·标点/退化**（`punct-precheck`+`check-degeneration`）→ ③ **门禁·去味/质检**（**`quality-gate` 唯一硬门禁**，内含 `style-lint`+`check-ai-patterns`，**去味只在此做一次、勿在外重复跑**；含 pacing 维度；通过写入 `.pipeline/qa-passed.json` 当章标记）→ ④ `tracking-updater`(+`reading-power` 喂追读，**首章前必填**；**软强制：after-chapter 卡当章 qa 通过标记，未过 exit 2，可 `--force` 留痕**) → ⑤ `drift-guard` 护栏（advisory，可选 `--strict` 阻断）→ ⑥ `learn-bank`+`pipeline-gate backup`。分工口径：**净化管标点与退化、门禁管去味与质检**，两阶段不重叠。详见 `SKILL.md`「主流程 SOP」与 `references/long-write.md` Phase 5 / `references/workflow-daily.md` Step 3。
+> **统一写章流程（canonical，每章 6 步；v1.7.15 起门禁前置）**：① 写正文 → ② **净化·标点/退化**（`punct-precheck`+`check-degeneration`）→ ③ **门禁·去味/质检**（**`quality-gate` 唯一硬门禁**，内含 `style-lint`+`check-ai-patterns`，**去味只在此做一次、勿在外重复跑**；含 pacing 维度；通过写入 `.pipeline/qa-passed.json` 当章标记）→ ④ `tracking-updater`(+`reading-power` 喂追读，**首章前必填**；**软强制：after-chapter 卡当章 qa 通过标记 + 前 5 章内真实追读率补齐，未过/缺失则 exit 2，可 `--force` 留痕（qa→qa-force.log / 真实率→realrate-force.log）**) → ⑤ `drift-guard` 护栏（advisory，可选 `--strict` 阻断）→ ⑥ `learn-bank`+`pipeline-gate backup`。分工口径：**净化管标点与退化、门禁管去味与质检**，两阶段不重叠。详见 `SKILL.md`「主流程 SOP」与 `references/long-write.md` Phase 5 / `references/workflow-daily.md` Step 3。
 
 ---
 
