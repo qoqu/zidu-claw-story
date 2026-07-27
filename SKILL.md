@@ -42,8 +42,8 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 本段是 SOP 流程图的**唯一权威源**，漂移检测以本段指纹为准（`scripts/audit.js --sop-check`）。四段式写章闭环与编排：
 
 1. **开书初始化**：选题→成书 `topic-to-book.js` → 追踪 / 大纲 / 设定骨架
-2. **每章 6 步**（唯一 canonical，与 `docs/sop-complete.svg` / `docs/scripts.md` 口径一致）：
-   ① 写正文 → ② 喂追读（`tracking-updater` + `reading-power`，**首章前必填**）→ ③ 净化·标点/退化（`punct-precheck` + `check-degeneration`）→ ④ 门禁·去味/质检（`quality-gate` 唯一硬门禁，内含 `style-lint` + `check-ai-patterns`，**去味只在此做一次、勿在外重复跑**，exit≠0 不入 track）→ ⑤ 护栏（`drift-guard` 文风漂移，默认 advisory，可选 `--strict` 阻断）→ ⑥ 沉淀+备份（`learn-bank` + `pipeline-gate` backup）
+2. **每章 6 步**（唯一 canonical，与 `docs/sop-complete.svg` / `docs/scripts.md` 口径一致；v1.7.15 起**门禁前置**）：
+   ① 写正文 → ② 净化·标点/退化（`punct-precheck` + `check-degeneration`）→ ③ 门禁·去味/质检（`quality-gate` 唯一硬门禁，内含 `style-lint` + `check-ai-patterns`，**去味只在此做一次、勿在外重复跑**；通过写入 `.pipeline/qa-passed.json` 当章标记）→ ④ 喂追读（`tracking-updater` + `reading-power`，**首章前必填**；**软强制：after-chapter 卡当章 qa 通过标记，未过 exit 2，可 `--force` 留痕**）→ ⑤ 护栏（`drift-guard` 文风漂移，默认 advisory，可选 `--strict` 阻断）→ ⑥ 沉淀+备份（`learn-bank` + `pipeline-gate` backup）
 3. **完结门禁**：`finish-book.js` 伏笔回收 / 设定缺口 / 事实矛盾 / 收尾质量四查
 4. **观/控/扩**：节奏密度 `pacing-density`、仪表盘 `dashboard`、题材库 `genre-library`、设定卡 `setting-cards`、发布物料 `promo-pack`
 
@@ -282,13 +282,13 @@ node scripts/rank-dispatcher.js refresh --dir data/rank    # 逐个 spawn 7 爬�
 3. 项目文件结构（`设定/` `大纲/` `正文/` `追踪/` `对标/`）遵循本工具箱约定，详见各 `references/<sub>.md`。
 4. **写章标准流程（WB 手动版，唯一 canonical 流程）**：开书时从 `references/genres/` 选题材模板作为设定基底，之后**每章严格按以下 6 步**——与 `references/long-write.md` Phase 5、`references/workflow-daily.md` Step 3 完全一致，不要各写一套：
    1. 写正文（Phase 4）
-   2. `tracking-updater.js after-chapter` + **`reading-power`**（喂追读密度数据；不填则 review / 门禁的追读维度永远为空；可加 `--qidian-rate/--fanqie-rate`（起点/番茄）或 `--real-rate` 从平台后台手抄真实追读率，让真实数据接管 pacing 信号）
-   3. 去味/格式一次性：`punct-precheck.js`（标点格式化）+ `check-degeneration.js`（退化防护）；**AI 味由第 4 步 quality-gate 内部 check-ai-patterns 覆盖，不要在其外重复跑**
-   4. **质量门禁 `quality-gate.js <章.md> <项目> [--genre X]`（exit 0 才过；含 `pacing` 维度，最新章密度过低会 ⚠️ 预警；narrative-writer agent 不跑此脚本）**——这是写章的唯一硬门禁
-      - **narrative-writer agent 跳过 quality-gate 的工作流兜底**：agent 写完章节返回后，**主线程在跑 step ② `tracking-updater after-chapter` 之前必须显式跑一次 `quality-gate.js <该章> <项目>`**，exit ≠ 0 不进入 track，并把阻断项转 `finish-book.js --todo` 风格的待办人工收尾，避免 agent 写章绕过唯一硬门禁导致"带病章节"入库。
+   2. 净化/格式一次性：`punct-precheck.js`（标点格式化）+ `check-degeneration.js`（退化防护）；**AI 味由第 3 步 quality-gate 内部 check-ai-patterns 覆盖，不要在其外重复跑**
+   3. **质量门禁 `quality-gate.js <章.md> <项目> [--genre X]`（exit 0 才过；含 `pacing` 维度，密度过低会 ⚠️ 预警；narrative-writer agent 不跑此脚本）**——这是写章的唯一硬门禁；**通过时把当章写入 `.pipeline/qa-passed.json` 通过标记，未过则清除**
+   4. `tracking-updater.js after-chapter` + **`reading-power`**（喂追读密度数据；不填则 review / pacing 的追读维度永远为空；可加 `--qidian-rate/--fanqie-rate`（起点/番茄）或 `--real-rate` 从平台后台手抄真实追读率，让真实数据接管 pacing 信号）——**软强制：after-chapter 先校验当章 `.pipeline/qa-passed.json` 通过标记，未过 quality-gate 一律 exit 2 阻断（草稿/实验章可 `--force` 跳过并留痕 `.pipeline/qa-force.log`），杜绝 agent / 主线程漏跑门禁导致带病章节入追踪账本**
    5. 风格护栏 `drift-guard.js <章.md> --project <项目>`（默认 advisory 不阻断，仅提示文风漂移；可选 `--strict` 阻断）
    6. `learn-bank.js add` 沉淀好写法 + `pipeline-gate.js backup --chapter N` 自动备份
    - **门禁语义说明**：`quality-gate.js` 是综合门禁（内部已含 check-ai-patterns / style-lint 等）；`pipeline-gate.js qa` 只是它外面套的 `.pipeline` 状态机标记壳，**两者不要重复跑**——需要状态机标记时用 `pipeline-gate.js qa`（内部调 quality-gate），否则直接调 `quality-gate.js`。中途失败用 `pipeline-gate.js resume --chapter N` 查看断点续跑。
+   - **顺序说明（v1.7.15 起门禁前置）**：由「先喂追读后门禁」改为「先门禁后喂追读」，配合 tracking-updater 软强制（track 卡 qa）。代价：quality-gate 的 pacing 维度改用上一章追读数据（滞后一章；pacing 为 advisory 不阻断，影响可控）。
 
 ---
 

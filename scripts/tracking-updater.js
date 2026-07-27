@@ -29,7 +29,9 @@
  *
  * 用法：
  *   node tracking-updater.js <project-dir> init
- *   node tracking-updater.js <project-dir> after-chapter --chapter N --summary "..."
+ *   node tracking-updater.js <project-dir> after-chapter --chapter N --summary "..." [--force]
+ *     （after-chapter 会先校验当章已过 quality-gate（.pipeline/qa-passed.json），未过则 exit 2 阻断；
+ *       门禁前置流程：净化 → quality-gate → after-chapter。--force 跳过并留痕 .pipeline/qa-force.log）
  *   node tracking-updater.js <project-dir> add-foreshadow --chapter N --text "..." [--recover "..."]
  *   node tracking-updater.js <project-dir> add-timeline   --chapter N --time "..." --desc "..." --chars "..."
  *   node tracking-updater.js <project-dir> set-character  --name "..." --key "身份" --value "..."
@@ -38,7 +40,7 @@
  *   node tracking-updater.js <project-dir> add-repeat     --content "..." --location "..." [--count N] [--alt "..."]
  *   node tracking-updater.js <project-dir> set-material   --name "..." --status "..." [--chapter N]
  *
- * 退出码：0=成功，1=参数/用法错误，2=文件操作失败。
+ * 退出码：0=成功，1=参数/用法错误，2=文件操作失败 / after-chapter 当章未过 quality-gate（软强制，可 --force 绕过留痕）。
  */
 
 const fs = require('fs');
@@ -96,6 +98,36 @@ function getLastChapter(projectDir) {
   if (!c) return 0;
   const m = c.match(/最后完成章节[：:]\s*第\s*(\d+)\s*章/);
   return m ? parseInt(m[1], 10) : 0;
+}
+
+// ===== 软强制（①）：after-chapter 前校验当章已过 quality-gate =====
+// 杜绝「带病章节」被写入追踪账本。通过标记由 quality-gate.js 在 exit 0 时写入
+// .pipeline/qa-passed.json。--force 可绕过并留痕 .pipeline/qa-force.log。
+function qaPassedPath(projectDir) { return path.join(projectDir, '.pipeline', 'qa-passed.json'); }
+function hasQaPassed(projectDir, chapterNum) {
+  try {
+    const d = JSON.parse(fs.readFileSync(qaPassedPath(projectDir), 'utf-8'));
+    return !!(d && d.chapters && d.chapters[String(chapterNum)]);
+  } catch { return false; }
+}
+function logForce(projectDir, chapterNum) {
+  try {
+    const fp = path.join(projectDir, '.pipeline', 'qa-force.log');
+    fs.mkdirSync(path.dirname(fp), { recursive: true });
+    fs.appendFileSync(fp, `${new Date().toISOString()}\t第${chapterNum}章\t--force 跳过 quality-gate 校验\n`, 'utf-8');
+  } catch { /* 留痕失败不阻断 */ }
+}
+function requireQaForChapter(projectDir, chapterNum, force) {
+  if (hasQaPassed(projectDir, chapterNum)) return 0;
+  if (force) {
+    warn(`第${chapterNum}章未过 quality-gate，--force 跳过（已留痕 .pipeline/qa-force.log）`);
+    logForce(projectDir, chapterNum);
+    return 0;
+  }
+  err(`第${chapterNum}章尚未通过 quality-gate（.pipeline/qa-passed.json 无该章通过标记）。`);
+  err(`请先运行：node quality-gate.js <第${chapterNum}章.md> ${projectDir} 通过后再 track；`);
+  err('确属草稿/实验章要跳过，请加 --force（会留痕 .pipeline/qa-force.log）。');
+  return 2;
 }
 
 // ===== 初始化 =====
@@ -405,6 +437,8 @@ function main() {
     case 'after-chapter': {
       const chapter = parseInt(getOpt(rest, 'chapter'), 10);
       if (!chapter) { err('缺少 --chapter N'); return 1; }
+      const gate = requireQaForChapter(projectDir, chapter, rest.includes('--force'));
+      if (gate !== 0) return gate;
       return afterChapter(projectDir, chapter, getOpt(rest, 'summary'));
     }
 

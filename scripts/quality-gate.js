@@ -97,6 +97,24 @@ function getTargetWords(projectDir, chapterFile) {
   return 3000;
 }
 
+// 软强制（①）：把当章门禁结果写入 .pipeline/qa-passed.json，供 tracking-updater after-chapter 校验。
+// 通过(exit 0)写入/刷新该章标记；阻断(2)/评分不足(3)则清除该章标记。标记写入失败不影响门禁退出码。
+function recordQaMarker(projectDir, chapterFile, status) {
+  try {
+    const m = path.basename(chapterFile, '.md').match(/第(\d+)章/);
+    if (!m) return;
+    const ch = String(parseInt(m[1], 10));
+    const dir = path.join(projectDir, '.pipeline');
+    fs.mkdirSync(dir, { recursive: true });
+    const fp = path.join(dir, 'qa-passed.json');
+    let data = { chapters: {} };
+    try { const d = JSON.parse(fs.readFileSync(fp, 'utf-8')); if (d && d.chapters) data = d; } catch { /* 忽略损坏，重建 */ }
+    if (status === 'pass') data.chapters[ch] = { at: new Date().toISOString() };
+    else delete data.chapters[ch];
+    fs.writeFileSync(fp, JSON.stringify(data, null, 2) + '\n', 'utf-8');
+  } catch { /* 标记写入失败不影响门禁退出码 */ }
+}
+
 function main() {
   const args = process.argv.slice(2);
   const jsonMode = args.includes('--json');
@@ -370,6 +388,8 @@ function main() {
   const overallStatus = blockers.length > 0 ? 'blocked'
     : (scoreFailed ? 'score_fail'
     : 'pass');
+
+  recordQaMarker(projectDir, chapterFile, overallStatus);
 
   if (jsonMode) {
     const result = {

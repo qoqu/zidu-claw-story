@@ -1,7 +1,7 @@
 <svg viewBox="0 0 680 902" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
 <title>zidu-claw-story 完整流程 SOP</title>
 <desc>开书初始化到每章6步循环到完结门禁，观控扩并行</desc>
-<!-- 同步说明：本图为 SOP 快照，基于技能 v1.7.15 / commit 2c17c08 的 SKILL.md 流程。SKILL.md 主流程变更后，须用可视化工具重绘并覆盖本文件（docs/sop-complete.svg 与 sop-complete.html 成对维护）。 -->
+<!-- 同步说明：本图为 SOP 快照，基于技能 v1.7.15 的 SKILL.md「主流程 SOP」段（SOP-ANCHOR）。每章6步为「门禁前置」：净化→门禁→喂追读→护栏→沉淀。SKILL.md 主流程变更后，须重绘覆盖本文件与 sop-complete.html，并经 scripts/audit.js --sop-check 校验漂移。 -->
 <style>
   .th { font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 14px; font-weight: 500; fill: #2C2C2A; }
   .ts { font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 12px; font-weight: 400; fill: #5F5E5A; }
@@ -52,21 +52,21 @@
 </g>
 <line x1="340" y1="264" x2="340" y2="274" stroke="#5F5E5A" stroke-width="1.2" marker-end="url(#arrow)"/>
 <g>
-  <rect x="100" y="276" width="480" height="48" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
-  <text x="116" y="295" class="th" style="font-size:14px">2 · 追踪更新 + 追读力</text>
-  <text x="116" y="313" class="ts" style="font-size:12px">tracking-updater after-chapter + reading-power（平台真实率手抄）</text>
+  <rect x="100" y="276" width="480" height="48" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+  <text x="116" y="295" class="th" style="font-size:14px">2 · 净化 / 格式</text>
+  <text x="116" y="313" class="ts" style="font-size:12px">punct-precheck + check-degeneration（AI 味由 step3 内部覆盖）</text>
 </g>
 <line x1="340" y1="324" x2="340" y2="334" stroke="#5F5E5A" stroke-width="1.2" marker-end="url(#arrow)"/>
 <g>
-  <rect x="100" y="336" width="480" height="48" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
-  <text x="116" y="355" class="th" style="font-size:14px">3 · 去味 / 格式</text>
-  <text x="116" y="373" class="ts" style="font-size:12px">punct-precheck + check-degeneration（AI 味由 step4 内部覆盖）</text>
+  <rect x="100" y="336" width="480" height="48" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="1.5"/>
+  <text x="116" y="355" class="th" style="font-size:14px">3 · 质量门禁（唯一硬门禁）</text>
+  <text x="116" y="373" class="ts" style="font-size:12px">quality-gate.js &lt;章&gt; &lt;项目&gt; — exit 0 才过，写入 .pipeline/qa-passed.json 当章标记</text>
 </g>
 <line x1="340" y1="384" x2="340" y2="394" stroke="#5F5E5A" stroke-width="1.2" marker-end="url(#arrow)"/>
 <g>
-  <rect x="100" y="396" width="480" height="48" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="1.5"/>
-  <text x="116" y="415" class="th" style="font-size:14px">4 · 质量门禁（唯一硬门禁）</text>
-  <text x="116" y="433" class="ts" style="font-size:12px">quality-gate.js &lt;章&gt; &lt;项目&gt; — exit 0 才过，含 pacing 维度</text>
+  <rect x="100" y="396" width="480" height="48" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+  <text x="116" y="415" class="th" style="font-size:14px">4 · 追踪更新 + 追读力</text>
+  <text x="116" y="433" class="ts" style="font-size:12px">tracking-updater after-chapter + reading-power — 卡当章 qa 标记（可 --force 留痕）</text>
 </g>
 <line x1="340" y1="444" x2="340" y2="454" stroke="#5F5E5A" stroke-width="1.2" marker-end="url(#arrow)"/>
 <g>
@@ -86,9 +86,9 @@
 <text x="588" y="392" class="ts" style="font-size:11px;fill:#27500A">每章</text>
 <text x="588" y="406" class="ts" style="font-size:11px;fill:#27500A">循环</text>
 
-<!-- narrative-writer 兜底 note -->
+<!-- 软强制 note -->
 <rect x="100" y="574" width="480" height="34" rx="8" fill="#FFFFFF" stroke="#993C1D" stroke-width="0.8" stroke-dasharray="4 3"/>
-<text x="116" y="595" class="ts" style="font-size:12px;fill:#712B13">⚠ 兜底：narrative-writer agent 跳过 quality-gate → 主线程显式补跑（exit≠0 不入 track，转 --todo 待办）</text>
+<text x="116" y="595" class="ts" style="font-size:12px;fill:#712B13">⚠ 软强制：after-chapter 卡当章 qa 通过标记（.pipeline/qa-passed.json），未过 quality-gate 拒跑，--force 留痕</text>
 
 <line x1="340" y1="620" x2="340" y2="634" stroke="#5F5E5A" stroke-width="1.2" marker-end="url(#arrow)"/>
 
@@ -150,5 +150,5 @@
   <text x="524" y="843" class="ts" style="font-size:11px">事实账本</text>
 </g>
 
-<text x="40" y="896" class="tf">SOP 快照 · v1.7.15 / commit 2c17c08 · SKILL.md 流程变更后须重绘覆盖</text>
+<text x="40" y="896" class="tf">SOP 快照 · v1.7.15 · 门禁前置（净化→门禁→喂追读）· SKILL.md 流程变更后须重绘并经 audit.js --sop-check 校验</text>
 </svg>

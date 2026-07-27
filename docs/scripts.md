@@ -4,7 +4,7 @@
 
 命令中的 `<项目目录>` 指你的小说工程根（含 `正文/` `设定/` `追踪/` 等）。
 
-> **统一写章流程（canonical，每章 6 步）**：① 写正文 → ② `tracking-updater`(+`reading-power` 喂追读，**首章前必填**) → ③ **净化·标点/退化**（`punct-precheck`+`check-degeneration`）→ ④ **门禁·去味/质检**（**`quality-gate` 唯一硬门禁**，内含 `style-lint`+`check-ai-patterns`，**去味只在此做一次、勿在外重复跑**；含 pacing 维度）→ ⑤ `drift-guard` 护栏（advisory，可选 `--strict` 阻断）→ ⑥ `learn-bank`+`pipeline-gate backup`。分工口径：**净化管标点与退化、门禁管去味与质检**，两阶段不重叠。详见 `SKILL.md`「主流程 SOP」与 `references/long-write.md` Phase 5 / `references/workflow-daily.md` Step 3。
+> **统一写章流程（canonical，每章 6 步；v1.7.15 起门禁前置）**：① 写正文 → ② **净化·标点/退化**（`punct-precheck`+`check-degeneration`）→ ③ **门禁·去味/质检**（**`quality-gate` 唯一硬门禁**，内含 `style-lint`+`check-ai-patterns`，**去味只在此做一次、勿在外重复跑**；含 pacing 维度；通过写入 `.pipeline/qa-passed.json` 当章标记）→ ④ `tracking-updater`(+`reading-power` 喂追读，**首章前必填**；**软强制：after-chapter 卡当章 qa 通过标记，未过 exit 2，可 `--force` 留痕**) → ⑤ `drift-guard` 护栏（advisory，可选 `--strict` 阻断）→ ⑥ `learn-bank`+`pipeline-gate backup`。分工口径：**净化管标点与退化、门禁管去味与质检**，两阶段不重叠。详见 `SKILL.md`「主流程 SOP」与 `references/long-write.md` Phase 5 / `references/workflow-daily.md` Step 3。
 
 ---
 
@@ -14,7 +14,7 @@
 
 | 脚本 | 作用 |
 |---|---|
-| `quality-gate.js` | 统一质量门禁入口（双道去味：style-lint + check-ai-patterns；含追读回落 pacing 维度 advisory；其余检查全绿才放行） |
+| `quality-gate.js` | 统一质量门禁入口（双道去味：style-lint + check-ai-patterns；含追读回落 pacing 维度 advisory；其余检查全绿才放行）；**exit 0 通过时把当章写入 `.pipeline/qa-passed.json`，阻断/评分不足则清除**（供 tracking-updater after-chapter 软强制校验） |
 | `style-lint.js` | 文风检查（措辞/病句/一级禁用词） |
 | `check-ai-patterns.js` | AI 句式检测（套词/陈词/抽象总结/微动作等），去味第一道，由 quality-gate 内部调用 |
 | `consistency-check.js` | 一致性检查（人名/设定前后矛盾） |
@@ -65,14 +65,15 @@ node scripts/banned-words.js <章节.md> <项目目录>
 
 | 脚本 | 作用 |
 |---|---|
-| `tracking-updater.js` | 追踪更新主程序（管理 8 类追踪文件） |
+| `tracking-updater.js` | 追踪更新主程序（管理 8 类追踪文件）；`after-chapter` 软强制：先校验当章 `.pipeline/qa-passed.json` 通过标记，未过 quality-gate 一律 exit 2 阻断（`--force` 跳过并留痕 `.pipeline/qa-force.log`），杜绝带病章节入追踪账本 |
 | `character-sync.js` | 角色状态同步 |
 | `pipeline-gate.js` | 流水线闸门状态机（`.pipeline/state.json`） |
 
 ```bash
-# 追踪更新
+# 追踪更新（门禁前置：先跑 quality-gate 通过后，再 after-chapter）
 node scripts/tracking-updater.js <项目目录> init
-node scripts/tracking-updater.js <项目目录> after-chapter --chapter N --summary "..."
+node scripts/quality-gate.js <章.md> <项目目录>          # 通过会写 .pipeline/qa-passed.json 当章标记
+node scripts/tracking-updater.js <项目目录> after-chapter --chapter N --summary "..." [--force]
 node scripts/tracking-updater.js <项目目录> add-foreshadow --chapter N --text "..." --cover "..."
 node scripts/tracking-updater.js <项目目录> add-timeline --chapter N --time "..." --desc "..." --chars "..."
 node scripts/tracking-updater.js <项目目录> set-character --name "..." --key "..." --value "..."
