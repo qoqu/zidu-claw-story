@@ -23,7 +23,7 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 
 > 这一条优先级高于「一、意图路由表」的被动匹配：路由表解决「用户说了 A 就做 A」，本段解决「用户没说清就主动给地图」。
 
-### 功能总览（6 大域）
+### 功能总览（8 大域）
 
 | 域 | 能做什么 | 入口 |
 |---|---|---|
@@ -32,9 +32,11 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 | 📊 选 | 起点 / 番茄 / 晋江 / 盐言扫榜选题 | `references/long-scan.md`、`references/short-scan.md` |
 | ✨ 净 | 去 AI 味、生成封面图 | `references/deslop.md`、`references/cover.md` |
 | 🗂 查 | 审查体检、导入已有书、初始化环境 | `references/review.md`、`references/import.md`、`references/setup.md` |
-| 🛡 控 | 量化质检、伏笔/时间线/角色/物品追踪、追读力量化、自动备份/断点续跑、浏览器 CDP 抓取、项目体检、跨章事实账本、长期记忆沉淀库、节奏密度曲线、文风漂移检测、`drift-guard` 风格护栏、`quality-gate` 追读回落门禁、多项目仪表盘 | `scripts/quality-gate.js`、`scripts/tracking-updater.js`、`scripts/pipeline-gate.js`、`references/browser-cdp.md`、`scripts/doctor.js`、`scripts/continuity-ledger.js`、`scripts/learn-bank.js`、`scripts/pacing-density.js`、`scripts/style-drift.js`、`scripts/drift-guard.js`、`scripts/dashboard.js` |
+| 🛡 控 | **质检**：量化门禁、去味、`quality-gate` 追读回落预警<br>**追踪**：伏笔/时间线/角色/物品追踪、追读力量化、自动备份/断点续跑<br>**体检·账本·记忆**：项目体检、跨章事实账本、长期记忆沉淀库<br>**观·控**：节奏密度曲线、文风漂移检测、`drift-guard` 风格护栏、多项目仪表盘<br>**浏览器**：CDP 抓取 | `quality-gate.js`、`tracking-updater.js`、`pipeline-gate.js`、`doctor.js`、`continuity-ledger.js`、`learn-bank.js`、`pacing-density.js`、`style-drift.js`、`drift-guard.js`、`dashboard.js`、`references/browser-cdp.md` |
 | 🔁 流 | 选题→成书闭环、排行榜蓝海指数、写完一章风格护栏、自测回归护栏 | `scripts/topic-to-book.js`、`scripts/rank-dispatcher.js`、`scripts/drift-guard.js`、`scripts/selftest.js` |
 | 📦 扩 | 题材库检索/扩充、自动生成本书设定卡、多平台发布物料（章推/书评/求追读） | `scripts/genre-library.js`、`scripts/setting-cards.js`、`scripts/promo-pack.js` |
+
+> 💡 **从零开书？** 一条龙：先 `node scripts/topic-to-book.js scaffold`（或 `scan --from-rank` 借热榜定选题）→ 读 `references/long-write.md` 按大纲写正文 → 之后**每章严格走上方「主流程 SOP」第 2 步的 6 步**。短篇同理走 `references/short-write.md`。
 
 <!-- SOP-ANCHOR-START -->
 ## 主流程 SOP（权威源 → docs/sop-complete.svg / docs/sop-complete.html）
