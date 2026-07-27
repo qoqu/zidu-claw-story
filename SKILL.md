@@ -36,6 +36,19 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 | 🔁 流 | 选题→成书闭环、排行榜蓝海指数、写完一章风格护栏、自测回归护栏 | `scripts/topic-to-book.js`、`scripts/rank-dispatcher.js`、`scripts/drift-guard.js`、`scripts/selftest.js` |
 | 📦 扩 | 题材库检索/扩充、自动生成本书设定卡、多平台发布物料（章推/书评/求追读） | `scripts/genre-library.js`、`scripts/setting-cards.js`、`scripts/promo-pack.js` |
 
+<!-- SOP-ANCHOR-START -->
+## 主流程 SOP（权威源 → docs/sop-complete.svg / docs/sop-complete.html）
+
+本段是 SOP 流程图的**唯一权威源**，漂移检测以本段指纹为准（`scripts/audit.js --sop-check`）。四段式写章闭环与编排：
+
+1. **开书初始化**：选题→成书 `topic-to-book.js` → 追踪 / 大纲 / 设定骨架
+2. **每章 6 步**：净化（`punct-precheck` / `punct-format`）→ 门禁（`quality-gate` 量化质检，exit≠0 不入 track）→ 护栏（`style-drift` / `drift-guard` 文风漂移）→ 记忆沉淀（`tracking-updater` / `continuity-ledger` / `learn-bank`）→ 备份（`pipeline-gate` backup）
+3. **完结门禁**：`finish-book.js` 伏笔回收 / 设定缺口 / 事实矛盾 / 收尾质量四查
+4. **观/控/扩**：节奏密度 `pacing-density`、仪表盘 `dashboard`、题材库 `genre-library`、设定卡 `setting-cards`、发布物料 `promo-pack`
+
+> 改动本段后**必须**同步重导出 `docs/sop-complete.svg` 与 `docs/sop-complete.html`，并运行 `node scripts/audit.js --update-baseline` 刷新漂移基线（CI 经 `selftest.js` 自动告警，不再依赖人工记忆）。
+<!-- SOP-ANCHOR-END -->
+
 ## 一、意图路由表
 
 | 用户意图 | 关键词示例 | 执行 |

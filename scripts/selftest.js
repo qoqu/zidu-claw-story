@@ -231,6 +231,23 @@ function phaseFunctional(dir) {
     } catch { fails.push('assemble-genre-card 输出非合法 JSON'); }
   }
 
+  // 11) SOP 图漂移软检查（非阻断；SKILL.md 主流程变更须重导出 docs/sop-complete.*）
+  //     NOTE 级，不计入 fails——目的是自动可见，而非阻断自测。
+  try {
+    const sopOut = execFileSync(node, [path.join(dir, 'audit.js'), '--sop-check', '--json'],
+      { stdio: 'pipe', timeout: 15000 }).toString();
+    try {
+      const sop = JSON.parse(sopOut);
+      if (sop.drift) {
+        console.log(`${NOTE} SOP 图漂移提醒：${sop.reason}（docs/sop-complete.* 可能需重导出，并运行 audit.js --update-baseline）`);
+      } else if (!QUIET) {
+        console.log(`${NOTE} SOP 图漂移检查：基线一致（hash=${sop.hash}）`);
+      }
+    } catch { console.log(`${NOTE} SOP 漂移检查输出非 JSON，跳过`); }
+  } catch (e) {
+    console.log(`${NOTE} SOP 漂移检查未运行：${((e.stdout || e.stderr || '').toString().trim().split('\n')[0] || e.message)}`);
+  }
+
   try { fs.rmSync(tmp, { recursive: true, force: true }); } catch { /* ignore */ }
   return fails;
 }

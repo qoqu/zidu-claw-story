@@ -1,6 +1,6 @@
 # 脚本命令参考（scripts/）
 
-本目录含 **48 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
+本目录含 **52 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
 
 命令中的 `<项目目录>` 指你的小说工程根（含 `正文/` `设定/` `追踪/` 等）。
 
@@ -138,10 +138,16 @@ node scripts/setup-cdp-chrome.js            # 启动可远程调试的 Chrome
 |---|---|
 | `repair-scripts.js` | 脚本自检/修复（路径与依赖校验） |
 | `outline-pacer.js` | 字数节奏 / 日更配速 |
+| `audit.js` | 包全量审计 + SOP 漂移检测：引用关系图谱（孤立文件/死链）、`--sop-check` 给 `selftest.js` 做漂移软检查、`--update-baseline` 刷新 `docs/sop-baseline.json`（随包置于 scripts/） |
 
 ```bash
 node scripts/repair-scripts.js
 node scripts/outline-pacer.js <项目目录> --target 4000
+
+# 包全量审计（孤立文件 / 死链 / 引用图谱）+ SOP 漂移检测
+node scripts/audit.js
+node scripts/audit.js --sop-check [--json]   # 仅 SOP 漂移，供 selftest
+node scripts/audit.js --update-baseline      # 刷新 docs/sop-baseline.json
 ```
 
 ---
