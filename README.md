@@ -196,6 +196,10 @@ node scripts/promo-pack.js book    <项目目录> --platform 小红书 [--title 
 | [docs/install.md](docs/install.md) | WB / OpenClaw / Hermes 安装与部署 |
 | [docs/scripts.md](docs/scripts.md) | 51 个脚本分类与命令参考 |
 | [docs/references.md](docs/references.md) | references/ 知识库主题索引 |
+| [docs/sop-complete.svg](docs/sop-complete.svg) | 完整 SOP 流程图（矢量源，开书→每章6步→完结门禁→观/控/扩） |
+| [docs/sop-complete.html](docs/sop-complete.html) | 完整 SOP 流程图（浏览器浏览页，含四段图例 + 下载 SVG） |
+
+> **SOP 图为静态快照**：基于 v1.7.15 / commit `2c17c08`。当 `SKILL.md` 主流程（开书初始化 / 每章6步 / 完结门禁 / 观控扩）发生变更时，需重新导出 `docs/sop-complete.svg` 与 `docs/sop-complete.html`（原生成脚本见 `audit-zidu-2026-07-24.js` 的可视化段或本仓库历史提交中的 `show_widget` 输出），否则图会失真。
 
 ## ⚙️ 环境要求
 

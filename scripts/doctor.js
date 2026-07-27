@@ -103,6 +103,33 @@ function checkBackups(projectDir, problems) {
   if (ageDays > 14) problems.push({ level: 1, msg: `最新备份已 ${ageDays} 天未更新（建议写章后跑 pipeline-gate backup）` });
 }
 
+function checkFinishTodo(projectDir, problems) {
+  const script = path.join(__dirname, 'finish-book.js');
+  if (!exists(script)) { problems.push({ level: 1, msg: 'finish-book.js 缺失，跳过完结门禁回炉清单' }); return []; }
+  let raw;
+  try {
+    raw = execFileSync('node', [script, projectDir, '--json', '--no-archive'],
+      { encoding: 'utf-8', timeout: 180000, stdio: ['pipe', 'pipe', 'pipe'] });
+  } catch (e) {
+    raw = (e.stdout || '').toString();
+    if (!raw.trim()) { problems.push({ level: 0, msg: `完结门禁检查异常（exit ${e.status || '?'}），跳过回炉清单` }); return []; }
+  }
+  let data;
+  try { data = JSON.parse(raw); } catch { problems.push({ level: 0, msg: '完结门禁输出非 JSON，跳过回炉清单' }); return []; }
+  const todo = Array.isArray(data.todo) ? data.todo : [];
+  if (todo.length === 0) {
+    ok('完结门禁：无阻断项，回炉清单为空（可随时完结）');
+  } else {
+    warn(`完结门禁：存在 ${todo.length} 项回炉待办（非阻断，仅供规划）`);
+    for (const t of todo) {
+      info(`· [${t.check}] ${t.chapter || '全书'} — ${t.reason}`);
+      if (t.action) info(`    建议：${t.action}`);
+    }
+    problems.push({ level: 1, msg: `完结门禁回炉清单 ${todo.length} 项（详见上方）` });
+  }
+  return todo;
+}
+
 function runSubcheck(scriptRel, args, problems, label) {
   const script = path.join(__dirname, scriptRel);
   if (!exists(script)) { problems.push({ level: 1, msg: `子检查脚本缺失，跳过：${scriptRel}` }); return; }
@@ -132,6 +159,7 @@ function main() {
   if (!isDir(projectDir)) { err(`项目目录不存在: ${projectDir}`); process.exit(2); }
 
   const problems = [];
+  let finishTodo = [];
   console.log(`\n${BOLD}🩺 zidu-claw-story 项目体检${RESET} — ${projectDir}\n`);
 
   console.log(`${BOLD}1. 结构完整性${RESET}`);
@@ -153,6 +181,8 @@ function main() {
     } else {
       info('尚无正文章节，跳过最新章子检查');
     }
+    console.log(`\n${BOLD}6. 完结门禁回炉清单（finishable 状态）${RESET}`);
+    finishTodo = checkFinishTodo(projectDir, problems);
   }
 
   const errors = problems.filter(p => p.level === 2);
@@ -169,7 +199,7 @@ function main() {
   console.log(`\n统计：${errors.length} 错误 / ${warns.length} 警告 / ${notes.length} 提示`);
 
   if (jsonMode) {
-    console.log('\n' + JSON.stringify({ status: errors.length ? 'fail' : 'pass', errors: errors.length, warns: warns.length, problems }, null, 2));
+    console.log('\n' + JSON.stringify({ status: errors.length ? 'fail' : 'pass', errors: errors.length, warns: warns.length, problems, finishTodo }, null, 2));
   }
 
   process.exit(errors.length > 0 ? 2 : (warns.length > 0 ? 1 : 0));
