@@ -31,10 +31,10 @@
 </style>
 </head>
 <body>
-<!-- 同步说明：本页为 SOP 快照，基于技能 v1.7.15 的 SKILL.md「主流程 SOP」段（SOP-ANCHOR）。每章6步为「门禁前置」：净化→门禁→喂追读→护栏→沉淀。SKILL.md 主流程变更后，须重绘覆盖 docs/sop-complete.svg 与本页（成对维护），并经 scripts/audit.js --sop-check 校验漂移。 -->
+<!-- 同步说明：本页为 SOP 快照，基于技能 v1.7.16 的 SKILL.md「主流程 SOP」段（SOP-ANCHOR）。每章6步为「门禁前置」：净化→门禁→喂追读→护栏→沉淀。SKILL.md 主流程变更后，须重绘覆盖 docs/sop-complete.svg 与本页（成对维护），并经 scripts/audit.js --sop-check 校验漂移。 -->
 <div class="wrap">
   <h1>zidu-claw-story 完整流程 SOP</h1>
-  <p class="sub">开书 → 每章 6 步循环（门禁前置：净化→门禁→喂追读）→ 完结门禁；观 / 控 / 扩任意阶段并行。基于技能版本 v1.7.15 整理。</p>
+  <p class="sub">开书 → 每章 6 步循环（门禁前置：净化→门禁→喂追读）→ 完结门禁；观 / 控 / 扩任意阶段并行。基于技能版本 v1.7.16 整理。</p>
 
   <div class="card">
     <svg viewBox="0 0 680 902" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
@@ -104,7 +104,7 @@
     <g>
       <rect x="100" y="396" width="480" height="48" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
       <text x="116" y="415" class="th" style="font-size:14px">4 · 追踪更新 + 追读力</text>
-      <text x="116" y="433" class="ts" style="font-size:12px">tracking-updater after-chapter + reading-power — 卡当章 qa 标记（可 --force 留痕）</text>
+      <text x="116" y="433" class="ts" style="font-size:12px">tracking-updater after-chapter + reading-power — 软强制：卡当章 qa 标记 + 前5章须有真实率（--force 留痕）</text>
     </g>
     <line x1="340" y1="444" x2="340" y2="454" stroke="#5F5E5A" stroke-width="1.2" marker-end="url(#arrow)"/>
     <g>
@@ -126,7 +126,7 @@
 
     <!-- 软强制 note -->
     <rect x="100" y="574" width="480" height="34" rx="8" fill="#FFFFFF" stroke="#993C1D" stroke-width="0.8" stroke-dasharray="4 3"/>
-    <text x="116" y="595" class="ts" style="font-size:12px;fill:#712B13">⚠ 软强制：after-chapter 卡当章 qa 通过标记（.pipeline/qa-passed.json），未过 quality-gate 拒跑，--force 留痕</text>
+    <text x="116" y="595" class="ts" style="font-size:12px;fill:#712B13">⚠ 软强制（after-chapter 内）：①卡当章 qa 标记(.pipeline/qa-passed.json) ②前5章须有真实率；缺则拒跑，--force 留痕</text>
 
     <line x1="340" y1="620" x2="340" y2="634" stroke="#5F5E5A" stroke-width="1.2" marker-end="url(#arrow)"/>
 
@@ -188,20 +188,20 @@
       <text x="524" y="843" class="ts" style="font-size:11px">事实账本</text>
     </g>
 
-    <text x="40" y="896" class="tf">SOP 快照 · v1.7.15 · 门禁前置（净化→门禁→喂追读）· SKILL.md 流程变更后须重绘并经 audit.js --sop-check 校验</text>
+    <text x="40" y="896" class="tf">SOP 快照 · v1.7.16 · 门禁前置（净化→门禁→喂追读）+ 软强制（qa / 真实率）· SKILL.md 流程变更后须重绘并经 audit.js --sop-check 校验</text>
     </svg>
   </div>
 
   <div class="legend">
     <p><b>① 开书 / 初始化（一次性）</b>：选题扫描 → 题材卡 → 开书骨架 → 追踪初始化，跑完进入每章 6 步。</p>
-    <p><b>② 每章 6 步循环（唯一 canonical）</b>：写正文 → 追踪更新+追读力 → 去味/格式 → <b>质量门禁（唯一硬门禁，exit 0 才过）</b> → 风格护栏（advisory）→ 沉淀+备份。</p>
+    <p><b>② 每章 6 步循环（唯一 canonical，门禁前置）</b>：写正文 → 净化·标点/退化 → <b>质量门禁（唯一硬门禁，exit 0 才过）</b> → 追踪更新+追读力（软强制：卡当章 qa 标记 + 前5章须有真实追读率，可 --force 留痕）→ 风格护栏（advisory）→ 沉淀+备份。</p>
     <p><b>③ 完结门禁（finish-book.js）</b>：伏笔回收 / 设定缺口 / 事实矛盾 / 收尾章质量门，任一阻断 → <code>--todo</code> 回炉清单回炉重写。</p>
     <p><b>④ 观 / 控 / 扩（并行，非阻断）</b>：doctor / dashboard / pacing-density / style-drift / continuity-ledger。</p>
-    <p><b>铁律</b>：门禁不要重复跑（要状态机标记用 <code>pipeline-gate qa</code>，否则直接 <code>quality-gate</code>）；AI 味只由 step4 内部覆盖；reading-power 首章前必填。</p>
+    <p><b>铁律</b>：门禁不要重复跑（要状态机标记用 <code>pipeline-gate qa</code>，否则直接 <code>quality-gate</code>）；AI 味只由 step3 内部覆盖；reading-power 首章前必填真实率（软强制②）。</p>
   </div>
 
   <div class="sync">
-    ⚠️ 本页与 <code>docs/sop-complete.svg</code> 为 SOP 快照，基于技能 v1.7.15 的 SKILL.md「主流程 SOP」段（门禁前置：净化→门禁→喂追读）。SKILL.md 主流程变更后，须重绘覆盖这两个文件（成对维护），并经 <code>scripts/audit.js --sop-check</code> 校验漂移，否则图示会失真。
+    ⚠️ 本页与 <code>docs/sop-complete.svg</code> 为 SOP 快照，基于技能 v1.7.16 的 SKILL.md「主流程 SOP」段（门禁前置：净化→门禁→喂追读）。SKILL.md 主流程变更后，须重绘覆盖这两个文件（成对维护），并经 <code>scripts/audit.js --sop-check</code> 校验漂移，否则图示会失真。
   </div>
 
   <div class="dl">

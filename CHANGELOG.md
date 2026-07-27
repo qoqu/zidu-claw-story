@@ -6,6 +6,15 @@
 
 ---
 
+## v1.7.16（2026-07-27，版本 bump + SOP 图示同步 C②）
+
+纯版本 bump 与图示同步，**无脚本行为变更**（C② 真实率软强制逻辑已于 v1.7.15 的 `2833ddb` 落地）：
+
+- **VERSION 1.7.15 → 1.7.16**：同步 `README.md`、`docs/sop-baseline.json`、12 个 `references/*.md` frontmatter 的 `version:`，及 `references/setup.md` 的 `setup_skill_version:`。
+- **SOP 流程图补 C② 节点**：`docs/sop-complete.svg` / `docs/sop-complete.html` 现于第 4 步「追踪更新 + 追读力」与软强制 note 区体现「软强制②：前 5 章内须补齐真实追读率，>5 章无则拒跑，--force 留痕 `.pipeline/realrate-force.log`」；页脚/同步注释版本号升 1.7.16。
+- **HTML legend 顺序对齐门禁前置**：原「写正文 → 追踪 → 净化 → 门禁」旧顺序修正为「写正文 → 净化 → 质量门禁 → 追踪(+软强制) → 护栏 → 沉淀」，与图中框序一致。
+- 验证：selftest 53/53 PASS；audit.js 全绿（SOP-ANCHOR 指纹不变，仍为 93bc0e9c——本次未触动 SKILL.md 主流程区块）。
+
 ## v1.7.15（2026-07-23，SOP 流畅度审计全量修复）
 
 全流程 SOP 审计发现的 6 项（A/B/C/D/E/G）全部处理——含 3 处纯 doc/string 修正与 3 处行为变更/新功能：

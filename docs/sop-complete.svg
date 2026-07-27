@@ -1,7 +1,7 @@
 <svg viewBox="0 0 680 902" width="100%" role="img" xmlns="http://www.w3.org/2000/svg">
 <title>zidu-claw-story 完整流程 SOP</title>
 <desc>开书初始化到每章6步循环到完结门禁，观控扩并行</desc>
-<!-- 同步说明：本图为 SOP 快照，基于技能 v1.7.15 的 SKILL.md「主流程 SOP」段（SOP-ANCHOR）。每章6步为「门禁前置」：净化→门禁→喂追读→护栏→沉淀。SKILL.md 主流程变更后，须重绘覆盖本文件与 sop-complete.html，并经 scripts/audit.js --sop-check 校验漂移。 -->
+<!-- 同步说明：本图为 SOP 快照，基于技能 v1.7.16 的 SKILL.md「主流程 SOP」段（SOP-ANCHOR）。每章6步为「门禁前置」：净化→门禁→喂追读→护栏→沉淀。SKILL.md 主流程变更后，须重绘覆盖本文件与 sop-complete.html，并经 scripts/audit.js --sop-check 校验漂移。 -->
 <style>
   .th { font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 14px; font-weight: 500; fill: #2C2C2A; }
   .ts { font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 12px; font-weight: 400; fill: #5F5E5A; }
@@ -66,7 +66,7 @@
 <g>
   <rect x="100" y="396" width="480" height="48" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
   <text x="116" y="415" class="th" style="font-size:14px">4 · 追踪更新 + 追读力</text>
-  <text x="116" y="433" class="ts" style="font-size:12px">tracking-updater after-chapter + reading-power — 卡当章 qa 标记（可 --force 留痕）</text>
+  <text x="116" y="433" class="ts" style="font-size:12px">tracking-updater after-chapter + reading-power — 软强制：卡当章 qa 标记 + 前5章须有真实率（--force 留痕）</text>
 </g>
 <line x1="340" y1="444" x2="340" y2="454" stroke="#5F5E5A" stroke-width="1.2" marker-end="url(#arrow)"/>
 <g>
@@ -88,7 +88,7 @@
 
 <!-- 软强制 note -->
 <rect x="100" y="574" width="480" height="34" rx="8" fill="#FFFFFF" stroke="#993C1D" stroke-width="0.8" stroke-dasharray="4 3"/>
-<text x="116" y="595" class="ts" style="font-size:12px;fill:#712B13">⚠ 软强制：after-chapter 卡当章 qa 通过标记（.pipeline/qa-passed.json），未过 quality-gate 拒跑，--force 留痕</text>
+<text x="116" y="595" class="ts" style="font-size:12px;fill:#712B13">⚠ 软强制（after-chapter 内）：①卡当章 qa 标记(.pipeline/qa-passed.json) ②前5章须有真实率；缺则拒跑，--force 留痕</text>
 
 <line x1="340" y1="620" x2="340" y2="634" stroke="#5F5E5A" stroke-width="1.2" marker-end="url(#arrow)"/>
 
@@ -150,5 +150,5 @@
   <text x="524" y="843" class="ts" style="font-size:11px">事实账本</text>
 </g>
 
-<text x="40" y="896" class="tf">SOP 快照 · v1.7.15 · 门禁前置（净化→门禁→喂追读）· SKILL.md 流程变更后须重绘并经 audit.js --sop-check 校验</text>
+<text x="40" y="896" class="tf">SOP 快照 · v1.7.16 · 门禁前置（净化→门禁→喂追读）+ 软强制（qa / 真实率）· SKILL.md 流程变更后须重绘并经 audit.js --sop-check 校验</text>
 </svg>
