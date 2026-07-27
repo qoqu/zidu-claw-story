@@ -2,8 +2,8 @@
 "use strict";
 // cdp-agent-browser — zidu-claw-story 内联 CDP 通道 shim（随包分发，零依赖）。
 //
-// 这是 fanqie-scan-cdp-shim 中 agent-browser 的 canonical 副本，直接内联进 skill，
-// 使其对「扫榜 / CDP 采集」自包含：把 skill 整个目录发给别人，无需对方另装任何 skill 或 CLI。
+// 作为随包分发的 canonical 副本内联进 skill，
+// 使 skill 对「扫榜 / CDP 采集」自包含：把 skill 整个目录发给别人，无需对方另装任何 CLI。
 //
 // 实现仅覆盖采集脚本用到的子命令：open / eval / eval -b
 // 通过持久化 Chrome Tab 的 CDP（原生 WebSocket，无第三方依赖）通信。
