@@ -2,11 +2,12 @@
 /**
  * drift-guard.js — 写作实时风格护栏（单章触发封装）
  * 零依赖，接力 style-drift.js。写完一章跑一次，只聚焦"最新章"是否文风漂移，
- * 给一句话提示。advisory 性质，退出码恒 0（不阻断写作流程）。
+ * 给一句话提示。默认 advisory（退出码恒 0，不阻断写作流程）；
+ * 加 `--strict` 后一旦检测到漂移（|z| 超阈值）退出码 2，可作阻断钩子（如 CI 预提交）。
  *
  * 接入方式（hook 集成点）：
  *   编辑器"保存章节"钩子 / CI 预提交钩子调用本脚本即可：
- *     node scripts/drift-guard.js <章节文件> [--project <项目目录>] [--z 1.5]
+ *     node scripts/drift-guard.js <章节文件> [--project <项目目录>] [--z 1.5] [--strict]
  *   前 2 章基线不足会自动跳过，第 3 章起生效。
  */
 
@@ -30,7 +31,7 @@ function main() {
   const argv = process.argv.slice(2);
   const chapterFile = argv.find((a) => !a.startsWith('--'));
   if (!chapterFile) {
-    err('用法：drift-guard.js <章节文件> [--project <项目目录>] [--z 1.5]');
+    err('用法：drift-guard.js <章节文件> [--project <项目目录>] [--z 1.5] [--strict]');
     return 2;
   }
   if (!fs.existsSync(chapterFile)) {
@@ -39,6 +40,7 @@ function main() {
   }
 
   const zTh = parseFloat(getOpt(argv, '--z', '1.5')) || 1.5;
+  const strict = argv.includes('--strict');
   let projectDir = getOpt(argv, '--project');
   if (!projectDir) projectDir = path.resolve(path.dirname(chapterFile), '..');
 
@@ -73,9 +75,13 @@ function main() {
   const driftKeys = Object.keys(z).filter((k) => Math.abs(z[k]) > zTh);
   if (driftKeys.length === 0) {
     log(`第${target.chapter}章文风一致（|z| ≤ ${zTh}），无漂移。`);
-  } else {
-    warn(`第${target.chapter}章文风漂移（|z| > ${zTh}）：${driftKeys.map((k) => `${k}=${z[k]}`).join('，')}`);
-    info('建议：检查本节句长 / 对话比 / 用词是否与全书基调一致（可能代笔、AI味突变或状态断档）。');
+    return 0;
+  }
+  warn(`第${target.chapter}章文风漂移（|z| > ${zTh}）：${driftKeys.map((k) => `${k}=${z[k]}`).join('，')}`);
+  info('建议：检查本节句长 / 对话比 / 用词是否与全书基调一致（可能代笔、AI味突变或状态断档）。');
+  if (strict) {
+    err('已启用 --strict：检测到文风漂移，退出码 2（阻断）。');
+    return 2;
   }
   return 0;
 }

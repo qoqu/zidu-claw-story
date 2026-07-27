@@ -4,7 +4,7 @@
 
 命令中的 `<项目目录>` 指你的小说工程根（含 `正文/` `设定/` `追踪/` 等）。
 
-> **统一写章流程（canonical，每章 6 步）**：写正文 → `tracking-updater`(+`reading-power` 喂追读) → `punct-precheck`+`check-degeneration` → **`quality-gate`(含 pacing 维度，唯一硬门禁)** → `drift-guard`(advisory) → `learn-bank`+`pipeline-gate backup`。`quality-gate` 内部已含 `check-ai-patterns`，**不要在其外重复跑**。详见 `SKILL.md`「写章标准流程」与 `references/long-write.md` Phase 5 / `references/workflow-daily.md` Step 3。
+> **统一写章流程（canonical，每章 6 步）**：① 写正文 → ② `tracking-updater`(+`reading-power` 喂追读，**首章前必填**) → ③ **净化·标点/退化**（`punct-precheck`+`check-degeneration`）→ ④ **门禁·去味/质检**（**`quality-gate` 唯一硬门禁**，内含 `style-lint`+`check-ai-patterns`，**去味只在此做一次、勿在外重复跑**；含 pacing 维度）→ ⑤ `drift-guard` 护栏（advisory，可选 `--strict` 阻断）→ ⑥ `learn-bank`+`pipeline-gate backup`。分工口径：**净化管标点与退化、门禁管去味与质检**，两阶段不重叠。详见 `SKILL.md`「主流程 SOP」与 `references/long-write.md` Phase 5 / `references/workflow-daily.md` Step 3。
 
 ---
 
@@ -186,7 +186,7 @@ node scripts/learn-bank.js <项目目录> stats
 | `pacing-density.js` | 节奏密度曲线：解析 `追踪/追读力.md` 每章块，合成追读密度分(0-100)，ASCII 曲线 + 水章标记 + `--html` 折线图（灰虚线=结构性归一分、蓝/橙实线=起点/番茄真实率、红=水章）；多平台真实率填了后有效密度 eff 改由真实率均值接管，任一平台低于阈值即水章预警 |
 | `style-drift.js` | 文风漂移检测：逐章算句长/对话比/标点密度/用词丰富度，与全书均值比 z-score，标记 `\|z\|>1.5` 的漂移章 |
 | `dashboard.js` | 多项目仪表盘：扫描根目录下属项目，聚合章节数/总字数/最新章/最新追读密度/doctor 健康度/记忆条数；`--html` 卡片含每本书追读密度火花线(SVG)与健康度进度条 |
-| `drift-guard.js` | 实时风格护栏：写完一章跑，复用 style-drift 只聚焦传入章的 z-score 漂移，advisory 不阻断，可作编辑器保存钩子 |
+| `drift-guard.js` | 实时风格护栏：写完一章跑，复用 style-drift 只聚焦传入章的 z-score 漂移；默认 advisory 不阻断（可作编辑器保存钩子），可选 `--strict` 在漂移时 exit 2 阻断（可作 CI 预提交钩子） |
 
 ```bash
 # 节奏密度曲线（写章后看节奏是否"凹"下去）
@@ -202,6 +202,7 @@ node scripts/dashboard.js <根目录> [--json] [--html out.html]
 
 # 实时风格护栏（写完一章触发，聚焦该章文风漂移）
 node scripts/drift-guard.js <章节文件> [--project <项目目录>] [--z 1.5]
+node scripts/drift-guard.js <章节文件> --strict   # 漂移时 exit 2 阻断（CI 预提交钩子用）
 ```
 
 ---
