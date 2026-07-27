@@ -2,7 +2,7 @@
 /**
  * 番茄小说排行榜采集脚本
  *
- * 配合 browser-cdp skill 使用。先启动 Chrome CDP 环境，再运行本脚本。
+ * 本 skill 自带 CDP 通道（cdp-agent-browser.js 随包内联），无需另装任何 skill 或 CLI。先 `node scripts/setup-cdp-chrome.js 9222` 启动 Chrome CDP，再运行本脚本。
  * 采集策略：从榜单页 __INITIAL_STATE__ 取结构化列表，再逐本请求详情页解码真实
  * 书名/作者/简介/题材/标签（番茄列表页有字体反爬，详情页 HTML 里是明文）。
  * 输出 Markdown 格式匹配 scan-output-format.md 规范。
@@ -15,7 +15,7 @@
  *   node fanqie-rank-scraper.js --channel 1 --top 15              # 每题材只取前 15 本
  *
  * 前置：
- *   node {SKILL_DIR}/browser-cdp/scripts/setup-cdp-chrome.js 9222
+ *   node scripts/setup-cdp-chrome.js 9222
  */
 
 const fs = require("fs");
@@ -259,7 +259,7 @@ function scrapeChannel(ch, type) {
   const probe = probePage(PORT);
   if (!probe) {
     console.error(
-      `  ✗ CDP 无响应。请确认已用 browser-cdp 启动 Chrome（端口 ${PORT}），且 agent-browser 可用。`
+      `  ✗ CDP 无响应。请确认已用 node scripts/setup-cdp-chrome.js 启动 Chrome CDP（端口 ${PORT}），且 node 可用（agent-browser 缺失会自动回退内联 shim）。`
     );
     return null;
   }

@@ -1,6 +1,6 @@
 # 脚本命令参考（scripts/）
 
-本目录含 **52 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
+本目录含 **53 个纯 Node 脚本**，无第三方依赖，统一用 `node scripts/<name>.js` 调用。脚本间通过 `__dirname` 互相定位，无需额外配置。
 
 命令中的 `<项目目录>` 指你的小说工程根（含 `正文/` `设定/` `追踪/` 等）。
 
@@ -124,7 +124,10 @@ node scripts/rank-dispatcher.js refresh --dir data/rank   # 逐个 spawn 7 爬�
 | 脚本 | 作用 |
 |---|---|
 | `setup-cdp-chrome.js` | 以 CDP 模式启动 Chrome（支持登录态抓取） |
-| `cdp-utils.js` | CDP 工具函数（页面操作/内容提取） |
+| `cdp-utils.js` | CDP 工具函数（页面操作/内容提取）；`ab()` 优先用真实 agent-browser CLI，缺失时自动回退内联 shim |
+| `cdp-agent-browser.js` | 内联 CDP 通道 shim（零依赖纯 Node，实现 open / eval / eval -b）；随包分发，使扫榜/采集**自包含** |
+
+> **CDP 采集自包含**：`cdp-agent-browser.js` 已内联进本 skill，无需另装 `fanqie-scan-cdp-shim` 或任何 agent-browser CLI。把本 skill 目录整体发给他人即可使用扫榜。运行时若宿主提供真实 `agent-browser` CLI 则优先使用，否则 `cdp-utils.ab()` 自动回退到本 shim。前置：先 `node scripts/setup-cdp-chrome.js 9222` 启动 Chrome CDP。
 
 ```bash
 node scripts/setup-cdp-chrome.js            # 启动可远程调试的 Chrome

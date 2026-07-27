@@ -4,11 +4,21 @@
  * 使用方式：
  *   const { ab, sleep, evalJSON, scrollLoad, getArg, safeStr } = require("./cdp-utils");
  *
- * 前置：
- *   node {SKILL_DIR}/browser-cdp/scripts/setup-cdp-chrome.js 9222
+ * 前置（启动 Chrome CDP 调试端口）：
+ *   node scripts/setup-cdp-chrome.js 9222
+ *
+ * CDP 通道自包含说明（v1.7.15 起）：
+ *   ab() 优先调用宿主环境提供的真实 agent-browser CLI；
+ *   若该 CLI 缺失（ENOENT / 未识别），自动回退到随包内联的
+ *   scripts/cdp-agent-browser.js（纯 Node 零依赖 shim，实现 open/eval/eval -b）。
+ *   因此把本 skill 整个目录发给他人即可使用扫榜 / 采集，无需另装任何 skill 或 CLI。
  */
 
-const { execSync } = require("child_process");
+const { execSync, execFileSync } = require("child_process");
+const path = require("path");
+
+// 随包内联的 CDP shim（零依赖，canonical 副本），agent-browser CLI 缺失时回退到此
+const SHIM = path.join(__dirname, "cdp-agent-browser.js");
 
 // agent-browser 缺失告警只打印一次，避免每页调用刷屏
 let _abWarned = false;
@@ -16,10 +26,11 @@ function warnAgentBrowserMissing(detail) {
   if (_abWarned) return;
   _abWarned = true;
   process.stderr.write(
-    "\n[cdp-utils] ⚠ agent-browser CLI 未安装或不可用" +
+    "\n[cdp-utils] ⚠ CDP 通道不可用" +
       (detail ? "（" + detail + "）" : "") +
       "：排行榜 / 扫描将静默降级（输出可能为空或退化为占位）。\n" +
-      "  请先部署 agent-browser（或检查 PATH），否则依赖 CDP 的采集无法真正工作。\n"
+      "  已尝试真实 agent-browser CLI 与随包内联 shim 均失败；请确认 Chrome CDP 已启动" +
+      "（node scripts/setup-cdp-chrome.js 9222）且 node 可用。\n"
   );
 }
 
@@ -42,12 +53,26 @@ function ab(port, ...args) {
       stdio: ["pipe", "pipe", "pipe"],
     }).trim();
   } catch (e) {
-    // agent-browser 未安装 / 不在 PATH → 友好告警一次，仍优雅降级返回 ""
+    // 真实 agent-browser CLI 未安装 / 不在 PATH → 回退到随包内联 shim
     const msg = String((e && (e.message || e.stderr)) || "");
     const missing = e && e.code === "ENOENT";
     const notRecognized = /not recognized|command not found|no such file|'agent-browser' is not recognized/i.test(msg);
     if (missing || notRecognized) {
-      warnAgentBrowserMissing(missing ? "ENOENT：命令未找到" : "命令未被识别");
+      try {
+        return execFileSync(process.execPath, [SHIM, "--cdp", String(port), ...args], {
+          encoding: "utf-8",
+          timeout: 20000,
+          stdio: ["pipe", "pipe", "pipe"],
+        }).trim();
+      } catch (e2) {
+        // shim 也起不来（极少见：node 不可达 / shim 自身损坏）→ 告警一次，优雅降级返回 ""
+        const m2 = String((e2 && (e2.message || e2.stderr)) || "");
+        const missing2 = e2 && e2.code === "ENOENT";
+        const notRec2 = /not recognized|command not found|no such file/i.test(m2);
+        if (missing2 || notRec2) warnAgentBrowserMissing("内联 shim 也无法启动（node 不可达？）");
+        else warnAgentBrowserMissing("内联 shim 执行失败：" + (m2.split("\n")[0] || ""));
+        return e2.stdout?.trim() || "";
+      }
     }
     return e.stdout?.trim() || "";
   }

@@ -48,9 +48,9 @@ zidu-claw-story/
 ├── LICENSE               # MIT
 ├── docs/
 │   ├── install.md       # 多宿主安装与部署
-│   ├── scripts.md       # 51 个脚本命令参考
+│   ├── scripts.md       # 53 个脚本命令参考
 │   └── references.md    # 知识库（references/）索引
-├── scripts/              # 51 个 Node 脚本（质检/去味/追踪/爬虫/CDP/体检/记忆/观/扩/闭环/自测/数据驱动/完结门禁/题材卡组装）
+├── scripts/              # 53 个 Node 脚本（质检/去味/追踪/爬虫/CDP/体检/记忆/观/扩/闭环/自测/数据驱动/完结门禁/题材卡组装）
 └── references/          # 243 篇子流程知识库（199 篇扁平 + genres/ 44 题材模板）
 ```
 
@@ -194,7 +194,7 @@ node scripts/promo-pack.js book    <项目目录> --platform 小红书 [--title 
 | 文档 | 内容 |
 |---|---|
 | [docs/install.md](docs/install.md) | WB / OpenClaw / Hermes 安装与部署 |
-| [docs/scripts.md](docs/scripts.md) | 52 个脚本分类与命令参考 |
+| [docs/scripts.md](docs/scripts.md) | 53 个脚本分类与命令参考 |
 | [docs/references.md](docs/references.md) | references/ 知识库主题索引 |
 | [docs/sop-complete.svg](docs/sop-complete.svg) | 完整 SOP 流程图（矢量源，开书→每章6步→完结门禁→观/控/扩） |
 | [docs/sop-complete.html](docs/sop-complete.html) | 完整 SOP 流程图（浏览器浏览页，含四段图例 + 下载 SVG） |

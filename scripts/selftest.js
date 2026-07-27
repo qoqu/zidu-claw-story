@@ -45,6 +45,7 @@ const SKIP_RUN = new Set([
   'dz-browse-scraper.js',
   'cdp-utils.js',
   'setup-cdp-chrome.js',
+  'cdp-agent-browser.js', // 内联 CDP shim（浏览器相关，仅阶段1 语法检查）
   'selftest.js', // 自身无子命令，`--help` 会完整运行自己导致递归，仅阶段1 语法检查即可
 ]);
 

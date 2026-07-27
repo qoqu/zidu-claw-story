@@ -2,7 +2,7 @@
 /**
  * 晋江文学城排行榜采集脚本
  *
- * 配合 browser-cdp skill 使用。先启动 Chrome CDP 环境，再运行本脚本。
+ * 本 skill 自带 CDP 通道（cdp-agent-browser.js 随包内联），无需另装任何 skill 或 CLI。先 `node scripts/setup-cdp-chrome.js 9222` 启动 Chrome CDP，再运行本脚本。
  * 采集策略：
  *   1) topten.php 列表页（纯文本，频道名直接出现，书名/作者交替行）解出频道分组。
  *   2) 从书名 anchor 取 novelid，逐本进 onebook.php 详情页补采核心指标
@@ -19,7 +19,7 @@
  *   node jjwxc-rank-scraper.js --type all                 # 全部榜单
  *
  * 前置：
- *   node {SKILL_DIR}/browser-cdp/scripts/setup-cdp-chrome.js 9222
+ *   node scripts/setup-cdp-chrome.js 9222
  */
 
 const fs = require("fs");
@@ -179,7 +179,7 @@ function scrapeRank(port, rankTypeId, channelId) {
     const probe = probePage(port);
     if (!probe) {
       console.error(
-        `  ✗ CDP 无响应。请确认已用 browser-cdp 启动 Chrome（端口 ${port}），且 agent-browser 可用。`
+        `  ✗ CDP 无响应。请确认已用 node scripts/setup-cdp-chrome.js 启动 Chrome CDP（端口 ${port}），且 node 可用（agent-browser 缺失会自动回退内联 shim）。`
       );
       return null;
     }

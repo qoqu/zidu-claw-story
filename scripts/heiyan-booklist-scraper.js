@@ -3,7 +3,7 @@
  * 黑岩短篇书库列表采集脚本
  *
  * ⚠️ 前置条件（必须）：
- *   1. 启动 Chrome CDP 环境
+ *   1. 启动 Chrome CDP 环境（`node scripts/setup-cdp-chrome.js 9222`；本 skill 自带 CDP 通道，无需另装）
  *   2. 在 Chrome 中手动登录 https://manage.zhangwenpindu.cn
  *      登录后会生成 Admin-Token cookie，脚本需要它调用后端 API
  *      未登录 → 脚本报错「未检测到 Admin-Token」
@@ -171,7 +171,7 @@ function main() {
     const probe = probePage(PORT);
     if (!probe) {
       console.error(
-        `  ✗ CDP 无响应。请确认已用 browser-cdp 启动 Chrome（端口 ${PORT}），且 agent-browser 可用。`
+        `  ✗ CDP 无响应。请确认已用 node scripts/setup-cdp-chrome.js 启动 Chrome CDP（端口 ${PORT}），且 node 可用（agent-browser 缺失会自动回退内联 shim）。`
       );
       return;
     }

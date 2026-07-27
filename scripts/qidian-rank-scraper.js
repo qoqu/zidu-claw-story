@@ -2,7 +2,7 @@
 /**
  * 起点中文网 排行榜采集脚本
  *
- * 配合 browser-cdp skill 使用。先启动 Chrome CDP 环境，再运行本脚本。
+ * 本 skill 自带 CDP 通道（cdp-agent-browser.js 随包内联），无需另装任何 skill 或 CLI。先 `node scripts/setup-cdp-chrome.js 9222` 启动 Chrome CDP，再运行本脚本。
  * 采集策略：
  *   1. 默认优先读取 m.qidian.com 的 SSR pageContext JSON（不依赖 CDP，规避 PC 站风控页）。
  *   2. 移动端不可用时再回退到 Chrome CDP 采集 PC 页面。
@@ -23,7 +23,7 @@
  *
  * 前置：
  *   默认 mobile/auto 模式不需要 Chrome。
- *   cdp 模式需要：node {SKILL_DIR}/browser-cdp/scripts/setup-cdp-chrome.js 9222
+ *   cdp 模式需要：node scripts/setup-cdp-chrome.js 9222
  */
 
 const fs = require("fs");

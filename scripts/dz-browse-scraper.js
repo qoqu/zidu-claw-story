@@ -2,7 +2,7 @@
 /**
  * 点众阅读短篇采集脚本
  *
- * 配合 browser-cdp skill 使用。先启动 Chrome CDP 环境，再运行本脚本。
+ * 本 skill 自带 CDP 通道（cdp-agent-browser.js 随包内联），无需另装任何 skill 或 CLI。先 `node scripts/setup-cdp-chrome.js 9222` 启动 Chrome CDP，再运行本脚本。
  * 采集策略：以 /book/{id} 链接为骨架，按 bookId 聚合每本书的多个 anchor
  * （封面/书名+评分/简介各一个），从中解出书名、评分、简介、作品页，再从卡片
  * 容器文本里解出 作者·标签·状态·字数 与最新章节。避免纯 innerText 行序解析把
@@ -15,7 +15,7 @@
  *   node dz-browse-scraper.js --channel all                # 全部
  *
  * 前置：
- *   node {SKILL_DIR}/browser-cdp/scripts/setup-cdp-chrome.js 9222
+ *   node scripts/setup-cdp-chrome.js 9222
  */
 
 const fs = require("fs");
@@ -112,7 +112,7 @@ function scrapeChannel(port, channelId) {
     const probe = probePage(port);
     if (!probe) {
       console.error(
-        `  ✗ CDP 无响应。请确认已用 browser-cdp 启动 Chrome（端口 ${port}），且 agent-browser 可用。`
+        `  ✗ CDP 无响应。请确认已用 node scripts/setup-cdp-chrome.js 启动 Chrome CDP（端口 ${port}），且 node 可用（agent-browser 缺失会自动回退内联 shim）。`
       );
       return null;
     }
