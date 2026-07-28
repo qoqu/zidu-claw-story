@@ -4,7 +4,7 @@
 
 把**网文写作全流程**（长篇/短篇/拆文/扫榜/去味/封面/导入/初始化）与**量化质检**（quality-gate 硬门禁）+ **追踪流水线**（tracking-updater / pipeline-gate）整合为**一个技能包**，无外部依赖、无宿主私有契约。
 
-当前版本：**1.7.16**（见 `VERSION`）。变更历史见 [`CHANGELOG.md`](./CHANGELOG.md)。
+当前版本：**1.7.17**（见 `VERSION`）。变更历史见 [`CHANGELOG.md`](./CHANGELOG.md)。
 
 ## ✨ 特性
 

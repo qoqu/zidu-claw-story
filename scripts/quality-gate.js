@@ -17,8 +17,8 @@ Checks:
   4. wordcount        — Chapter word count < target 90% → BLOCK
   5. cross-chapter    — Cross-chapter duplicate detection → BLOCK
   6. voice-check      — Character voice consistency → BLOCK
-  7. emotion-analyzer — Emotion curve flatness → BLOCK
-  8. satisfaction      — Satisfaction point density → BLOCK
+  7. emotion-analyzer — Emotion curve flatness → ADVISORY（默认不阻断；--strict 升级为 BLOCK）
+  8. satisfaction      — Satisfaction point density → ADVISORY（默认不阻断；--strict 升级为 BLOCK）
   9. detect-story-gaps — Setting/outline/tracking gaps → BLOCK (full mode only)
   10. writing-score   — 百分制评分（--genre 选择题材模板）
   11. pacing           — 最新章追读密度 < 阈值 → ADVISORY（不阻断，需先有追读数据）
@@ -42,11 +42,13 @@ Options:
   --skip-satisfaction Skip satisfaction-meter
   --fast              Only run blocking checks (skip warnings)
   --skip-pacing       Skip 追读回落检查（pacing）
+  --strict            Strict mode：将 情绪曲线/爽点密度 的 advisory 升级为 BLOCK（默认仅 advisory，由人工读感终裁）
 
 Exit codes:
   0 = all passed (including score >= threshold)
   2 = blocked (any issue found, must fix before continuing)
-  3 = score_fail (rule checks passed but score < threshold)`;
+  3 = score_fail (rule checks passed but score < threshold)
+  注：情绪曲线平坦 / 爽点密度不足 默认仅 advisory（exit 0 + 警告），--strict 时升级为 BLOCK（exit 2）`;
 
 function runScript(scriptPath, args) {
   try {
@@ -128,6 +130,7 @@ function main() {
   const skipEmotion = args.includes('--skip-emotion');
   const skipSatisfaction = args.includes('--skip-satisfaction');
   const skipPacing = args.includes('--skip-pacing');
+  const strictMode = args.includes('--strict');
   const fastMode = args.includes('--fast');
   const noScore = args.includes('--no-score');
   const genre = args.includes('--genre') ? args[args.indexOf('--genre') + 1] : 'default';
@@ -137,7 +140,7 @@ function main() {
   const filteredArgs = args.filter(a =>
     a !== '--json' && a !== '--full' && a !== '--skip-lint' && a !== '--skip-consistency' && a !== '--skip-foreshadow' &&
     a !== '--skip-cross-chapter' && a !== '--skip-voice' && a !== '--skip-emotion' && a !== '--skip-satisfaction' &&
-    a !== '--fast' && a !== '--no-score' && a !== '--genre' && a !== '--score' && a !== '--threshold' && a !== '--skip-pacing'
+    a !== '--fast' && a !== '--no-score' && a !== '--genre' && a !== '--score' && a !== '--threshold' && a !== '--skip-pacing' && a !== '--strict'
   );
 
   if (filteredArgs.length === 0 || filteredArgs[0] === '--help') {
@@ -287,7 +290,9 @@ function main() {
     results.emotion = data || { status: 'error', raw: r.output };
 
     if (data && data.status === 'fail') {
-      blockers.push(`情绪曲线：${data.summary.flat_warnings} 个问题`);
+      const msg = `情绪曲线：${data.summary.flat_warnings} 个问题`;
+      if (strictMode) blockers.push(msg);
+      else advisories.push(`${msg}（advisory，人工读感终裁；--strict 可升级阻断）`);
     }
   }
 
@@ -298,7 +303,9 @@ function main() {
     results.satisfaction = data || { status: 'error', raw: r.output };
 
     if (data && data.status === 'fail') {
-      blockers.push(`爽点密度：间距 ${data.summary.max_gap} 字超过目标`);
+      const msg = `爽点密度：间距 ${data.summary.max_gap} 字超过目标`;
+      if (strictMode) blockers.push(msg);
+      else advisories.push(`${msg}（advisory，人工读感终裁；--strict 可升级阻断）`);
     }
   }
 
