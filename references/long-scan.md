@@ -1,6 +1,6 @@
 ---
 name: story-long-scan
-version: 1.7.17
+version: 1.7.18
 description: "长篇网文扫榜。分析起点、番茄、晋江等平台排行榜数据，提炼市场趋势与热门题材。触发方式：/story-long-scan、/长篇扫榜、「长篇什么火」「起点排行」。"
 ---
 # story-long-scan：长篇网文扫榜
@@ -282,7 +282,7 @@ node scripts/jjwxc-rank-scraper.js --type 12 --list-only                 # 只�
 
 **如信息不足，向用户补齐项目条件：**「目标平台、已有素材、擅长题材/写作约束、计划篇幅是什么？」
 
-按 `topic-decision.md` 的选题四步产出 2-3 个推荐选题（能爆的原因 → 市场验证 → 差异化定位 → 可行性+失败风险+验证动作），写入**本次扫榜输出目录** `{outdir}/选题决策.md`，并告知用户路径与下一步：「开书时把 `选题决策.md` 放到小说项目根目录，写作会自动读取；想确认"能爆的原因"先 `/story-long-analyze` 拆对标书。」
+按 `topic-decision.md` 的选题四步产出 2-3 个推荐选题（能爆的原因 → 市场验证 → 差异化定位 → 可行性+失败风险+验证动作），写入**本次扫榜输出目录** `{outdir}/选题决策.md`，并告知用户路径。下一步**不是**自动开写——见下方「流程衔接」的**手动模式强制互动**：产出 `选题决策.md` 后必须停顿，用 AskUserQuestion 让用户先选「拆书 / 直接开书 / 再扫」。（若用户在同一句已明确说"开写 / 写第 N 章"，仍走「开书 → 咨询 → 写章」闸 B，不得跳过。）
 
 **硬规则：**
 - 可行性上限：背靠榜单标了 `[数据稀疏]` 或同方向样本 <15（小平台<10）⇒ 不许给"高"，强制降到"中" + 写明先验证；内置知识模式一律给"中"。
@@ -308,10 +308,24 @@ node scripts/jjwxc-rank-scraper.js --type 12 --list-only                 # 只�
 **流水线：** 长篇
 **位置：** 扫榜（第 1/3 步）
 
-| 时机 | 跳转到 | 命令 |
+### 手动模式强制互动（扫榜后的必停点）
+
+产出 `选题决策.md` 后，**禁止自动跳转**进拆书或开写。必须向用户用 **AskUserQuestion（或显式选项）** 抛出选择，等用户明确表态才继续——这是固化在 SKILL.md「手动模式人工闸 · 闸 A」的硬规则：
+
+- **拆书（推荐先研究标杆）**：选 1-3 本对标书跑 `/story-long-analyze` 深度拆解，坐实"能爆的原因"再设计自己的书（对齐 oh-story「先扫榜、后拆书」）；
+- **直接开书**：把 `选题决策.md` 放进项目根，`/story-long-write` 或 `topic-to-book scaffold` 开骨架（随后仍受「开书 → 咨询 → 写章」闸 B 约束，不能跳过）；
+- **再扫 / 换方向**：换平台或题材重跑 `/story-long-scan`；
+- **更适合短篇**：转 `/story-short-scan`。
+
+> 自动模式（定时 / 用户不在场）可跳过此停顿，自行决策分支。
+
+用户选定后跳转到：
+
+| 用户选择 | 跳转到 | 命令 |
 |---|---|---|
-| 找到方向 | story-long-analyze | `/story-long-analyze` |
-| 直接开写 | story-long-write | `/story-long-write` |
+| 拆书（研究标杆） | story-long-analyze | `/story-long-analyze` |
+| 直接开书 | story-long-write / topic-to-book scaffold | `/story-long-write` |
+| 再扫 / 换方向 | story-long-scan（换参） | `/story-long-scan` |
 | 更适合短篇 | story-short-scan | `/story-short-scan` |
 
 ## 参考资料

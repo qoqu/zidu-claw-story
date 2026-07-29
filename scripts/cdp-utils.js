@@ -57,7 +57,10 @@ function ab(port, ...args) {
     const msg = String((e && (e.message || e.stderr)) || "");
     const missing = e && e.code === "ENOENT";
     const notRecognized = /not recognized|command not found|no such file|'agent-browser' is not recognized/i.test(msg);
-    if (missing || notRecognized) {
+    // Windows 中文系统下 cmd.exe 的错误信息是 GBK 编码，regex 匹配不到；
+    // 额外判断：status=1 且 stdout 为空 → 命令不存在
+    const winMissing = process.platform === "win32" && e && e.status === 1 && !e.stdout;
+    if (missing || notRecognized || winMissing) {
       try {
         return execFileSync(process.execPath, [SHIM, "--cdp", String(port), ...args], {
           encoding: "utf-8",

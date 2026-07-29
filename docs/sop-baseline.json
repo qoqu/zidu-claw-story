@@ -1,6 +1,6 @@
 {
   "tool": "scripts/audit.js --sop-check",
-  "version": "1.7.17",
+  "version": "1.7.18",
   "hash": "93bc0e9c37c1c05b",
   "updatedAt": "2026-07-27",
   "note": "SKILL.md 主流程 SOP 锚点指纹。改动 SOP-ANCHOR 段后须重导出 docs/sop-complete.svg/.html 并运行 --update-baseline 刷新本基线。"
