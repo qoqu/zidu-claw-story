@@ -1,6 +1,6 @@
 ---
 name: story-long-scan
-version: 1.7.20
+version: 1.7.21
 description: "长篇网文扫榜。分析起点、番茄、晋江等平台排行榜数据，提炼市场趋势与热门题材。触发方式：/story-long-scan、/长篇扫榜、「长篇什么火」「起点排行」。"
 ---
 # story-long-scan：长篇网文扫榜
@@ -294,6 +294,8 @@ node scripts/jjwxc-rank-scraper.js --type 12 --list-only                 # 只�
 
 按 `topic-decision.md` 的选题四步产出 2-3 个推荐选题（能爆的原因 → 市场验证 → 差异化定位 → 可行性+失败风险+验证动作），写入**本次扫榜输出目录** `{outdir}/选题决策.md`，并告知用户路径。下一步**不是**自动开写——见下方「流程衔接」的**手动模式强制互动**：产出 `选题决策.md` 后必须停顿，用 AskUserQuestion 让用户先选「拆书 / 直接开书 / 再扫」。（若用户在同一句已明确说"开写 / 写第 N 章"，仍走「开书 → 咨询 → 写章」闸 B，不得跳过。）
 
+**同步构建「拆书候选书库」（供用户选书拆书）：** 对每个推荐选题，从本次实际扫榜条目中挑 2-4 本最贴合的对标书，每条含：书名 / 作者 / 平台·榜单 / 核心指标（在读数·月票·收藏等）/ 为什么适合当标杆（它集中体现了该选题的哪个爆点）。写入 `选题决策.md` 的「拆书候选书库」段；并在对话中**以列表展示**这份书库，作为闸 A「拆书」选项的直接输入。书必须取自真实扫榜样本，禁止凭空编造。
+
 **硬规则：**
 - 可行性上限：背靠榜单标了 `[数据稀疏]` 或同方向样本 <15（小平台<10）⇒ 不许给"高"，强制降到"中" + 写明先验证；内置知识模式一律给"中"。
 - "能爆的原因"只记为假设（`待拆文验证`）——单本上榜是个例，多本重复才算信号；要坐实靠拆文回填，本阶段不拆文。
@@ -322,7 +324,7 @@ node scripts/jjwxc-rank-scraper.js --type 12 --list-only                 # 只�
 
 产出 `选题决策.md` 后，**禁止自动跳转**进拆书或开写。必须向用户用 **AskUserQuestion（或显式选项）** 抛出选择，等用户明确表态才继续——这是固化在 SKILL.md「手动模式人工闸 · 闸 A」的硬规则：
 
-- **拆书（推荐先研究标杆）**：选 1-3 本对标书跑 `/story-long-analyze` 深度拆解，坐实"能爆的原因"再设计自己的书（对齐 oh-story「先扫榜、后拆书」）；
+- **拆书（推荐先研究标杆）**：进入后用 **AskUserQuestion 列出「拆书候选书库」中的书**让用户勾选 1-3 本（可跨选题），再把所选书的「书名+平台」直接带入 `/story-long-analyze`，坐实"能爆的原因"再设计自己的书（对齐 oh-story「先扫榜、后拆书」）。long-analyze 会接着向用户索取原文，不再重复问书名。
 - **直接开书**：把 `选题决策.md` 放进项目根，`/story-long-write` 或 `topic-to-book scaffold` 开骨架（随后仍受「开书 → 咨询 → 写章」闸 B 约束，不能跳过）；
 - **再扫 / 换方向**：换平台或题材重跑 `/story-long-scan`；
 - **更适合短篇**：转 `/story-short-scan`。
@@ -333,7 +335,7 @@ node scripts/jjwxc-rank-scraper.js --type 12 --list-only                 # 只�
 
 | 用户选择 | 跳转到 | 命令 |
 |---|---|---|
-| 拆书（研究标杆） | story-long-analyze | `/story-long-analyze` |
+| 拆书（研究标杆，从候选书库选 1-3 本） | story-long-analyze | `/story-long-analyze` |
 | 直接开书 | story-long-write / topic-to-book scaffold | `/story-long-write` |
 | 再扫 / 换方向 | story-long-scan（换参） | `/story-long-scan` |
 | 更适合短篇 | story-short-scan | `/story-short-scan` |

@@ -1,6 +1,6 @@
 ---
 name: story-long-finish
-version: 1.7.20
+version: 1.7.21
 description: "长篇完结 SOP。开书→大纲→连载→续写→完结 生命周期的最后一环：收尾前检查清单、坑线回收、人物结局、世界观闭合、番外/彩蛋、完结质量门（finish-book.js）、备份归档、完本后运营衔接。触发方式：/story-long-finish、「完结」「完本」「收尾」「写完了」。"
 ---
 

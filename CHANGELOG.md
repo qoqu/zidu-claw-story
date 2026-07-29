@@ -2,9 +2,13 @@
 
 纯 Node 零依赖单包 AI 网文写作技能。本文件记录 v1.7.x 系列的关键变更；更早的 v1.0–v1.6 历史不在此追溯。
 
-版本号规则：`VERSION` 文件为唯一真源，`SKILL.md` / `README.md` / 11 个 `references/*.md` frontmatter 同步 bump。所有 bump 通过纯 Node 脚本写回，规避 Windows PowerShell 的 UTF-8 BOM 注入回归。
+版本号规则：`VERSION` 文件为唯一真源，`SKILL.md` / `README.md` / 12 个 `references/*.md` frontmatter 同步 bump。所有 bump 通过纯 Node 脚本写回，规避 Windows PowerShell 的 UTF-8 BOM 注入回归。
 
 ---
+
+## v1.7.21（2026-07-29，扫榜后列表推荐题材+对应书供选拆书）
+
+强化 `story-long-scan` 的「选题→拆书」衔接：扫榜产出 `选题决策.md` 时，同步构建**「拆书候选书库」**——按推荐选题从真实扫榜样本挑 2-4 本对标书（书名/作者/平台·榜单/核心指标/为什么适合当标杆），并在对话中**以列表展示**。闸 A「拆书」分支改为用 AskUserQuestion 列出候选书让用户勾选 1-3 本（可跨选题），再把「书名+平台」直接带入 `/story-long-analyze`，不再重复问书名（long-analyze Phase 1 已识别该来源并改为只索取原文）。`topic-decision.md` 模板新增「拆书候选书库」段。未动 SOP-ANCHOR（指纹 93bc0e9c 不变）。
 
 ## v1.7.20（2026-07-29，启动闸无条件触发：无论启动词都先问功能）
 
