@@ -11,19 +11,37 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 - 所有子流程知识库：`references/<sub>.md`（路由后读对应主文档 + 其下 craft KB）。开书/大纲/写作阶段可运行 `node scripts/genre-methodology.js route --stage <outline|character|writing> --len <long|short>` 确定性召回 `references/genre-*` 跨题材写法方法论并注入上下文（与 `references/genres/` 的按题材模板互补，由 `genre-library.js` 检索）。
 - 版本：`VERSION` 文件
 
-## 〇、主动引导（零意图兜底）
+## 〇、启动闸（第一轮必须由人选择功能）
 
-**本 skill 必须主动引导，不要等用户先说出具体关键词。**
+**本 skill 启动后的第一件事：让用户选择本轮要用什么功能。**
 
 当本 skill 被加载，而用户**尚未给出明确子意图**（典型信号：只说「用一下 zidu-claw-story」「帮我写小说」「看看你能干嘛」「打开写作工具」等宽泛表述），你**必须**：
 
-1. **先输出功能总览**，而不是反问「你想做什么」就停住；
-2. 优先调用 `node scripts/menu.js` 生成最新功能清单并展示给用户；若无法执行脚本，则直接复用下方「功能总览」；
-3. 用一句话收尾询问用户想先做哪件事（从清单里挑），或让他直接描述需求。
+1. **立即用 AskUserQuestion 向用户抛出功能选择**（不要先展示整张地图再问——地图是选完后再展开的补充信息，不是第一步）；
+2. 选项为以下 **8 大域**（每个选项用一句话说明能做什么，让用户不用看地图就能选）；
+3. 用户选中某个域后，再展示该域的详细入口和子流程。
 
-> 这一条优先级高于「一、意图路由表」的被动匹配：路由表解决「用户说了 A 就做 A」，本段解决「用户没说清就主动给地图」。
+### 启动选择项（AskUserQuestion 选项）
 
-### 功能总览（8 大域）
+| 选项标签 | 一句话说明 |
+|---|---|
+| ✍ 写 | 长篇/短篇开书、大纲、连载、日更、续写、完结 |
+| 🔍 拆 | 拆文分析、对标爆款、黄金三章结构研究 |
+| 📊 选 | 扫榜选题（起点/番茄/晋江/盐言），找热门题材和蓝海 |
+| ✨ 净 | 去 AI 味、生成封面图 |
+| 🟥 查 | 审查体检、导入已有书、初始化写作环境 |
+| 🛡 控 | 质检门禁、伏笔/角色/时间线追踪、追读力、备份续跑、仪表盘 |
+| 🔁 流 | 选题→成书闭环、排行榜蓝海指数、风格护栏、自测回归 |
+| 📦 扩 | 题材库(37)检索、生成本书设定卡、多平台发布物料 |
+
+> 实施要点：
+> - **必须用 AskUserQuestion（或等效的显式选项停等）**，不能只输出文字列表等用户自己说。
+> - 用户选完后，再展开对应域的功能总览表（下方「功能总览」作为**按需展开的参考**，不是启动时全量展示）。
+> - 如果用户一开始就说出了明确意图（如「帮我扫个榜」「写一本都市文」），则跳过本闸，直接进入「一、意图路由表」匹配。
+
+### 功能总览（按需展开参考）
+
+> **用户选中某域后展示此表的对应该行作为详细入口指引。** 全量版本如下：
 
 | 域 | 能做什么 | 入口 |
 |---|---|---|
@@ -31,7 +49,7 @@ description: "AI 网文写作完整工具箱（单包、WB 原生）。触发场
 | 🔍 拆 | 长篇 / 短篇拆文、对标爆款、黄金三章 | `references/long-analyze.md`、`references/short-analyze.md` |
 | 📊 选 | 起点 / 番茄 / 晋江 / 盐言扫榜选题 | `references/long-scan.md`、`references/short-scan.md` |
 | ✨ 净 | 去 AI 味、生成封面图 | `references/deslop.md`、`references/cover.md` |
-| 🗂 查 | 审查体检、导入已有书、初始化环境 | `references/review.md`、`references/import.md`、`references/setup.md` |
+| 🟥 查 | 审查体检、导入已有书、初始化环境 | `references/review.md`、`references/import.md`、`references/setup.md` |
 | 🛡 控 | **质检**：量化门禁、去味、`quality-gate` 追读回落预警<br>**追踪**：伏笔/时间线/角色/物品追踪、追读力量化、自动备份/断点续跑<br>**体检·账本·记忆**：项目体检、跨章事实账本、长期记忆沉淀库<br>**观·控**：节奏密度曲线、文风漂移检测、`drift-guard` 风格护栏、多项目仪表盘<br>**浏览器**：CDP 抓取 | `quality-gate.js`、`tracking-updater.js`、`pipeline-gate.js`、`doctor.js`、`continuity-ledger.js`、`learn-bank.js`、`pacing-density.js`、`style-drift.js`、`drift-guard.js`、`dashboard.js`、`references/browser-cdp.md` |
 | 🔁 流 | 选题→成书闭环、排行榜蓝海指数、写完一章风格护栏、自测回归护栏 | `scripts/topic-to-book.js`、`scripts/rank-dispatcher.js`、`scripts/drift-guard.js`、`scripts/selftest.js` |
 | 📦 扩 | 题材库检索/扩充、自动生成本书设定卡、多平台发布物料（章推/书评/求追读） | `scripts/genre-library.js`、`scripts/setting-cards.js`、`scripts/promo-pack.js` |
